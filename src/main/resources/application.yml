@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: lms
+  profiles:
+    active: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+lms:
+  jwt:
+    # Valor de desarrollo débil a propósito; el real va en application-local.yml (gitignored) o una variable de entorno en producción.
+    secret: "cambia-este-valor-en-application-local-yml-o-en-produccion-0000"
+    expiracion-minutos: 120
+  admin:
+    email: admin@cibertec.com
+    password: Admin123!
