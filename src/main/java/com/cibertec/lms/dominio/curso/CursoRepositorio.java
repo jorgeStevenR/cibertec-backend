@@ -1,7 +1,8 @@
 package com.cibertec.lms.dominio.curso;
 
-import java.util.List;
 import java.util.Optional;
+
+import com.cibertec.lms.dominio.comun.Pagina;
 
 public interface CursoRepositorio {
 
@@ -9,9 +10,8 @@ public interface CursoRepositorio {
 
     Optional<Curso> buscarPorId(Long id);
 
-    List<Curso> listarTodos();
-
-    List<Curso> listarPorProfesor(Long profesorId);
+    /** profesorId es opcional (null = sin filtro). */
+    Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId);
 
     void eliminar(Long id);
 }

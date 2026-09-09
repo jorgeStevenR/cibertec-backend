@@ -1,7 +1,5 @@
 package com.cibertec.lms.web.controllers;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,10 +10,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cibertec.lms.aplicacion.usuario.UsuarioService;
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.usuario.Usuario;
+import com.cibertec.lms.web.dtos.PaginaResponseDTO;
 import com.cibertec.lms.web.dtos.ResetPasswordResponseDTO;
 import com.cibertec.lms.web.dtos.UsuarioActualizarRequestDTO;
 import com.cibertec.lms.web.dtos.UsuarioRequestDTO;
@@ -45,10 +46,18 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<UsuarioResponseDTO> listar() {
-        return usuarioService.listarTodos().stream()
-                .map(UsuarioResponseDTO::desde)
-                .toList();
+    public PaginaResponseDTO<UsuarioResponseDTO> listar(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamano,
+            @RequestParam(required = false) String busqueda) {
+
+        Pagina<Usuario> resultado = usuarioService.listarPaginado(pagina, tamano, busqueda);
+        return new PaginaResponseDTO<>(
+                resultado.contenido().stream().map(UsuarioResponseDTO::desde).toList(),
+                resultado.pagina(),
+                resultado.tamano(),
+                resultado.totalElementos(),
+                resultado.totalPaginas());
     }
 
     @GetMapping("/{id}")

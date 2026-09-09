@@ -1,11 +1,11 @@
 package com.cibertec.lms.aplicacion.curso;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
 import com.cibertec.lms.dominio.curso.CursoRepositorio;
 import com.cibertec.lms.dominio.excepcion.CursoNoEncontradoException;
@@ -47,12 +47,8 @@ public class CursoService {
                 .orElseThrow(() -> new CursoNoEncontradoException(id));
     }
 
-    public List<Curso> listarTodos() {
-        return cursoRepositorio.listarTodos();
-    }
-
-    public List<Curso> listarPorProfesor(Long profesorId) {
-        return cursoRepositorio.listarPorProfesor(profesorId);
+    public Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId) {
+        return cursoRepositorio.listarPaginado(pagina, tamano, profesorId);
     }
 
     public Curso actualizar(Long id, String titulo, String descripcion, boolean publicado, Long usuarioActualId, Rol rolActual) {

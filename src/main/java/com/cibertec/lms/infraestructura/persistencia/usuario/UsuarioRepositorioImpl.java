@@ -1,12 +1,14 @@
 package com.cibertec.lms.infraestructura.persistencia.usuario;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.usuario.Usuario;
 import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
+import com.cibertec.lms.infraestructura.persistencia.comun.PaginaMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,10 +35,12 @@ class UsuarioRepositorioImpl implements UsuarioRepositorio {
     }
 
     @Override
-    public List<Usuario> listarTodos() {
-        return jpaRepository.findAll().stream()
-                .map(UsuarioMapper::aDominio)
-                .toList();
+    public Pagina<Usuario> listarPaginado(int pagina, int tamano, String busqueda) {
+        PageRequest pageRequest = PageRequest.of(pagina, tamano);
+        var page = (busqueda == null || busqueda.isBlank())
+                ? jpaRepository.findAll(pageRequest)
+                : jpaRepository.buscarPaginado(busqueda, pageRequest);
+        return PaginaMapper.aDominio(page, UsuarioMapper::aDominio);
     }
 
     @Override

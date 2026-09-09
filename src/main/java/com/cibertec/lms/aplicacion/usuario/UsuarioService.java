@@ -2,11 +2,11 @@ package com.cibertec.lms.aplicacion.usuario;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.excepcion.EmailYaRegistradoException;
 import com.cibertec.lms.dominio.excepcion.UsuarioNoEncontradoException;
 import com.cibertec.lms.dominio.usuario.Usuario;
@@ -44,8 +44,8 @@ public class UsuarioService {
                 .orElseThrow(() -> new UsuarioNoEncontradoException(id));
     }
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepositorio.listarTodos();
+    public Pagina<Usuario> listarPaginado(int pagina, int tamano, String busqueda) {
+        return usuarioRepositorio.listarPaginado(pagina, tamano, busqueda);
     }
 
     public Usuario actualizar(Long id, String nombre, String apellido, com.cibertec.lms.dominio.usuario.Rol rol, boolean activo) {

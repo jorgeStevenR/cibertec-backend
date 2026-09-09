@@ -1,7 +1,5 @@
 package com.cibertec.lms.web.controllers;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cibertec.lms.aplicacion.curso.CursoService;
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
 import com.cibertec.lms.infraestructura.seguridad.UsuarioAutenticado;
 import com.cibertec.lms.web.dtos.CursoActualizarRequestDTO;
 import com.cibertec.lms.web.dtos.CursoRequestDTO;
 import com.cibertec.lms.web.dtos.CursoResponseDTO;
+import com.cibertec.lms.web.dtos.PaginaResponseDTO;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,12 +41,18 @@ public class CursoController {
     }
 
     @GetMapping
-    public List<CursoResponseDTO> listar(@RequestParam(required = false) Long profesorId) {
-        List<Curso> cursos = profesorId != null
-                ? cursoService.listarPorProfesor(profesorId)
-                : cursoService.listarTodos();
+    public PaginaResponseDTO<CursoResponseDTO> listar(
+            @RequestParam(required = false) Long profesorId,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamano) {
 
-        return cursos.stream().map(CursoResponseDTO::desde).toList();
+        Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId);
+        return new PaginaResponseDTO<>(
+                resultado.contenido().stream().map(CursoResponseDTO::desde).toList(),
+                resultado.pagina(),
+                resultado.tamano(),
+                resultado.totalElementos(),
+                resultado.totalPaginas());
     }
 
     @GetMapping("/{id}")

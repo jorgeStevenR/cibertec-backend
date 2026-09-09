@@ -1,7 +1,8 @@
 package com.cibertec.lms.dominio.usuario;
 
-import java.util.List;
 import java.util.Optional;
+
+import com.cibertec.lms.dominio.comun.Pagina;
 
 /** Puerto de salida: contrato que debe cumplir cualquier adaptador de persistencia, sin importar la base de datos usada. */
 public interface UsuarioRepositorio {
@@ -12,7 +13,8 @@ public interface UsuarioRepositorio {
 
     Optional<Usuario> buscarPorEmail(String email);
 
-    List<Usuario> listarTodos();
+    /** busqueda es opcional (null = sin filtro); compara contra nombre, apellido y email. */
+    Pagina<Usuario> listarPaginado(int pagina, int tamano, String busqueda);
 
     boolean existePorEmail(String email);
 

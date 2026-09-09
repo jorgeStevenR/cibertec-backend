@@ -1,12 +1,14 @@
 package com.cibertec.lms.infraestructura.persistencia.curso;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
 import com.cibertec.lms.dominio.curso.CursoRepositorio;
+import com.cibertec.lms.infraestructura.persistencia.comun.PaginaMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,13 +29,12 @@ class CursoRepositorioImpl implements CursoRepositorio {
     }
 
     @Override
-    public List<Curso> listarTodos() {
-        return jpaRepository.findAll().stream().map(CursoMapper::aDominio).toList();
-    }
-
-    @Override
-    public List<Curso> listarPorProfesor(Long profesorId) {
-        return jpaRepository.buscarPorProfesor(profesorId).stream().map(CursoMapper::aDominio).toList();
+    public Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId) {
+        PageRequest pageRequest = PageRequest.of(pagina, tamano);
+        var page = (profesorId == null)
+                ? jpaRepository.findAll(pageRequest)
+                : jpaRepository.buscarPorProfesorPaginado(profesorId, pageRequest);
+        return PaginaMapper.aDominio(page, CursoMapper::aDominio);
     }
 
     @Override
