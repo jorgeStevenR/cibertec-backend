@@ -15,6 +15,7 @@ class ContenidoMapper {
                 .nombre(entidad.getNombre())
                 .rutaArchivo(entidad.getRutaArchivo())
                 .url(entidad.getUrl())
+                .visible(entidad.isVisible())
                 .fechaSubida(entidad.getFechaSubida())
                 .build();
     }
@@ -27,6 +28,7 @@ class ContenidoMapper {
         entidad.setNombre(contenido.getNombre());
         entidad.setRutaArchivo(contenido.getRutaArchivo());
         entidad.setUrl(contenido.getUrl());
+        entidad.setVisible(contenido.isVisible());
         entidad.setFechaSubida(contenido.getFechaSubida());
         return entidad;
     }

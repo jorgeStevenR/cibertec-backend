@@ -45,6 +45,9 @@ public class ContenidoJpaEntity {
     @Column(columnDefinition = "text")
     private String url;
 
+    @Column(nullable = false, columnDefinition = "boolean not null default true")
+    private boolean visible;
+
     @Column(name = "fecha_subida", nullable = false)
     private LocalDateTime fechaSubida;
 }

@@ -45,6 +45,7 @@ public class ContenidoService {
                 .tipo(tipo)
                 .nombre(nombreOriginal)
                 .rutaArchivo(rutaDestino)
+                .visible(true)
                 .fechaSubida(LocalDateTime.now())
                 .build();
 
@@ -59,15 +60,21 @@ public class ContenidoService {
                 .tipo(TipoContenido.ENLACE)
                 .nombre(nombre)
                 .url(url)
+                .visible(true)
                 .fechaSubida(LocalDateTime.now())
                 .build();
 
         return contenidoRepositorio.guardar(nuevo);
     }
 
-    public List<ContenidoModulo> listarPorModulo(Long moduloId) {
+    public List<ContenidoModulo> listarPorModulo(Long moduloId, Long usuarioActualId, Rol rolActual) {
         moduloService.buscarPorId(moduloId);
-        return contenidoRepositorio.listarPorModulo(moduloId);
+        List<ContenidoModulo> contenidos = contenidoRepositorio.listarPorModulo(moduloId);
+
+        if (rolActual == Rol.ESTUDIANTE) {
+            return contenidos.stream().filter(ContenidoModulo::isVisible).toList();
+        }
+        return contenidos;
     }
 
     public String obtenerUrlDescarga(Long contenidoId, Long usuarioActualId, Rol rolActual) {
@@ -75,12 +82,32 @@ public class ContenidoService {
         Modulo modulo = moduloService.buscarPorId(contenido.getModuloId());
         Curso curso = cursoService.buscarPorId(modulo.getCursoId());
 
-        validarAcceso(curso, usuarioActualId, rolActual);
+        validarAcceso(curso, contenido, usuarioActualId, rolActual);
 
         if (contenido.getTipo() == TipoContenido.ENLACE) {
             return contenido.getUrl();
         }
         return almacenamientoPuerto.generarUrlDescarga(contenido.getRutaArchivo());
+    }
+
+    public ContenidoModulo cambiarVisibilidad(Long contenidoId, boolean visible, Long usuarioActualId, Rol rolActual) {
+        ContenidoModulo contenido = buscarPorId(contenidoId);
+        Modulo modulo = moduloService.buscarPorId(contenido.getModuloId());
+        Curso curso = cursoService.buscarPorId(modulo.getCursoId());
+        cursoService.validarPropietario(curso, usuarioActualId, rolActual);
+
+        ContenidoModulo actualizado = ContenidoModulo.builder()
+                .id(contenido.getId())
+                .moduloId(contenido.getModuloId())
+                .tipo(contenido.getTipo())
+                .nombre(contenido.getNombre())
+                .rutaArchivo(contenido.getRutaArchivo())
+                .url(contenido.getUrl())
+                .visible(visible)
+                .fechaSubida(contenido.getFechaSubida())
+                .build();
+
+        return contenidoRepositorio.guardar(actualizado);
     }
 
     public void eliminar(Long contenidoId, Long usuarioActualId, Rol rolActual) {
@@ -107,11 +134,14 @@ public class ContenidoService {
         return curso;
     }
 
-    /** A diferencia de validarPropietario (admin/profesor), aquí también se permite al estudiante matriculado. */
-    private void validarAcceso(Curso curso, Long usuarioActualId, Rol rolActual) {
+    /** A diferencia de validarPropietario (admin/profesor), aquí también se permite al estudiante matriculado, y solo si el contenido está visible. */
+    private void validarAcceso(Curso curso, ContenidoModulo contenido, Long usuarioActualId, Rol rolActual) {
         if (rolActual == Rol.ESTUDIANTE) {
             if (!matriculaRepositorio.existePorCursoYEstudiante(curso.getId(), usuarioActualId)) {
                 throw new AccessDeniedException("No estás matriculado en este curso");
+            }
+            if (!contenido.isVisible()) {
+                throw new AccessDeniedException("Este contenido todavía no está disponible");
             }
             return;
         }

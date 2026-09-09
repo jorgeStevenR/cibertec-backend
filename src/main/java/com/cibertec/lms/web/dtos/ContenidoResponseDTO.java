@@ -10,6 +10,7 @@ public record ContenidoResponseDTO(
         Long moduloId,
         TipoContenido tipo,
         String nombre,
+        boolean visible,
         LocalDateTime fechaSubida
 ) {
     public static ContenidoResponseDTO desde(ContenidoModulo contenido) {
@@ -18,6 +19,7 @@ public record ContenidoResponseDTO(
                 contenido.getModuloId(),
                 contenido.getTipo(),
                 contenido.getNombre(),
+                contenido.isVisible(),
                 contenido.getFechaSubida()
         );
     }

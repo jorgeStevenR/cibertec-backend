@@ -22,5 +22,8 @@ public class ContenidoModulo {
     /** URL externa; solo se usa cuando el tipo es ENLACE. */
     private String url;
 
+    /** Si es false, el estudiante no puede verlo aunque esté matriculado (admin/profesor sí lo ven siempre). */
+    private boolean visible;
+
     private LocalDateTime fechaSubida;
 }
