@@ -4,3 +4,13 @@ spring:
     username: postgres
     password: '<password>'
     driver-class-name: org.postgresql.Driver
+
+lms:
+  jwt:
+    secret: '<secreto-jwt>'
+  almacenamiento:
+    endpoint: https://<project-ref>.storage.supabase.co/storage/v1/s3
+    region: us-west-2
+    bucket: contenidos-lms
+    access-key-id: '<access-key-id>'
+    secret-access-key: '<secret-access-key>'

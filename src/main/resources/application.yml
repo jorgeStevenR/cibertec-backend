@@ -10,6 +10,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
 
 server:
   port: 8080
@@ -31,3 +35,11 @@ lms:
   admin:
     email: admin@cibertec.com
     password: Admin123!
+  almacenamiento:
+    # Estos valores reales van en application-local.yml (gitignored); aquí solo hay placeholders.
+    endpoint: ""
+    region: us-west-2
+    bucket: contenidos-lms
+    access-key-id: ""
+    secret-access-key: ""
+    url-firmada-minutos: 15
