@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cibertec.lms.aplicacion.curso.CursoService;
 import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
+import com.cibertec.lms.dominio.programa.ProgramaRepositorio;
 import com.cibertec.lms.dominio.usuario.Usuario;
 import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
 import com.cibertec.lms.infraestructura.seguridad.UsuarioAutenticado;
@@ -35,21 +36,23 @@ public class CursoController {
 
     private final CursoService cursoService;
     private final UsuarioRepositorio usuarioRepositorio;
+    private final ProgramaRepositorio programaRepositorio;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoResponseDTO> crear(@Valid @RequestBody CursoRequestDTO request) {
-        Curso creado = cursoService.crear(request.titulo(), request.descripcion(), request.profesorId());
+        Curso creado = cursoService.crear(request.titulo(), request.descripcion(), request.profesorId(), request.programaId());
         return ResponseEntity.status(HttpStatus.CREATED).body(aDto(creado));
     }
 
     @GetMapping
     public PaginaResponseDTO<CursoResponseDTO> listar(
             @RequestParam(required = false) Long profesorId,
+            @RequestParam(required = false) Long programaId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamano) {
 
-        Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId);
+        Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId, programaId);
         return new PaginaResponseDTO<>(
                 resultado.contenido().stream().map(this::aDto).toList(),
                 resultado.pagina(),
@@ -70,7 +73,8 @@ public class CursoController {
             @Valid @RequestBody CursoActualizarRequestDTO request,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Curso actualizado = cursoService.actualizar(
-                id, request.titulo(), request.descripcion(), request.publicado(), actual.id(), actual.rol());
+                id, request.titulo(), request.descripcion(), request.publicado(), request.programaId(),
+                actual.id(), actual.rol());
         return aDto(actualizado);
     }
 
@@ -81,10 +85,13 @@ public class CursoController {
         return ResponseEntity.noContent().build();
     }
 
-    /** El profesor no es sensible (cualquier autenticado ya puede ver el curso), asi que lo resolvemos aqui
-     *  en vez de exigir el rol ADMINISTRADOR que protege /api/usuarios. */
+    /** Ni el profesor ni el programa son datos sensibles (cualquier autenticado ya puede ver el curso), asi
+     *  que los resolvemos aqui en vez de exigir el rol ADMINISTRADOR que protege /api/usuarios y /api/programas. */
     private CursoResponseDTO aDto(Curso curso) {
         Usuario profesor = usuarioRepositorio.buscarPorId(curso.getProfesorId()).orElse(null);
-        return CursoResponseDTO.desde(curso, profesor);
+        var programa = curso.getProgramaId() != null
+                ? programaRepositorio.buscarPorId(curso.getProgramaId()).orElse(null)
+                : null;
+        return CursoResponseDTO.desde(curso, profesor, programa);
     }
 }

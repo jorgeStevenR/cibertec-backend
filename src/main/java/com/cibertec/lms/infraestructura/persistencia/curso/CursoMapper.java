@@ -13,6 +13,7 @@ class CursoMapper {
                 .titulo(entidad.getTitulo())
                 .descripcion(entidad.getDescripcion())
                 .profesorId(entidad.getProfesorId())
+                .programaId(entidad.getProgramaId())
                 .publicado(entidad.isPublicado())
                 .fechaCreacion(entidad.getFechaCreacion())
                 .build();
@@ -24,6 +25,7 @@ class CursoMapper {
         entidad.setTitulo(curso.getTitulo());
         entidad.setDescripcion(curso.getDescripcion());
         entidad.setProfesorId(curso.getProfesorId());
+        entidad.setProgramaId(curso.getProgramaId());
         entidad.setPublicado(curso.isPublicado());
         entidad.setFechaCreacion(curso.getFechaCreacion());
         return entidad;

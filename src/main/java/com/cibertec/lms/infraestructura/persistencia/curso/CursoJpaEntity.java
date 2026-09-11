@@ -34,6 +34,11 @@ public class CursoJpaEntity {
     @Column(name = "profesor_id", nullable = false)
     private Long profesorId;
 
+    /** Nullable a nivel de columna a propósito: los cursos creados antes de este campo no tienen programa asignado
+     *  todavía. La obligatoriedad para cursos nuevos se exige en la validación del DTO, no en el esquema. */
+    @Column(name = "programa_id")
+    private Long programaId;
+
     @Column(nullable = false)
     private boolean publicado;
 

@@ -10,8 +10,10 @@ public interface CursoRepositorio {
 
     Optional<Curso> buscarPorId(Long id);
 
-    /** profesorId es opcional (null = sin filtro). */
-    Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId);
+    /** profesorId y programaId son opcionales (null = sin filtro); si ambos vienen, profesorId tiene prioridad. */
+    Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId, Long programaId);
+
+    boolean existePorProgramaId(Long programaId);
 
     void eliminar(Long id);
 }

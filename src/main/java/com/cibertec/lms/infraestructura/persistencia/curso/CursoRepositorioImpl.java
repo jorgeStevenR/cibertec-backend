@@ -29,12 +29,19 @@ class CursoRepositorioImpl implements CursoRepositorio {
     }
 
     @Override
-    public Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId) {
+    public Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId, Long programaId) {
         PageRequest pageRequest = PageRequest.of(pagina, tamano);
-        var page = (profesorId == null)
-                ? jpaRepository.findAll(pageRequest)
-                : jpaRepository.buscarPorProfesorPaginado(profesorId, pageRequest);
+        var page = (profesorId != null)
+                ? jpaRepository.buscarPorProfesorPaginado(profesorId, pageRequest)
+                : (programaId != null)
+                        ? jpaRepository.buscarPorProgramaPaginado(programaId, pageRequest)
+                        : jpaRepository.findAll(pageRequest);
         return PaginaMapper.aDominio(page, CursoMapper::aDominio);
+    }
+
+    @Override
+    public boolean existePorProgramaId(Long programaId) {
+        return jpaRepository.existePorProgramaId(programaId);
     }
 
     @Override

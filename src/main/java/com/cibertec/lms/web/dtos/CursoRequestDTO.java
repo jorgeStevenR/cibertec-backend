@@ -11,6 +11,9 @@ public record CursoRequestDTO(
         String descripcion,
 
         @NotNull(message = "El id del profesor es obligatorio")
-        Long profesorId
+        Long profesorId,
+
+        @NotNull(message = "El id del programa es obligatorio")
+        Long programaId
 ) {
 }

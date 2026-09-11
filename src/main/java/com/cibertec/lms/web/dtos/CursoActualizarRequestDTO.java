@@ -1,6 +1,7 @@
 package com.cibertec.lms.web.dtos;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record CursoActualizarRequestDTO(
 
@@ -9,6 +10,9 @@ public record CursoActualizarRequestDTO(
 
         String descripcion,
 
-        boolean publicado
+        boolean publicado,
+
+        @NotNull(message = "El id del programa es obligatorio")
+        Long programaId
 ) {
 }
