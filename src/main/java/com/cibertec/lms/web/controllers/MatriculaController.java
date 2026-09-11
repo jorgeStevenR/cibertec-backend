@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cibertec.lms.aplicacion.matricula.MatriculaService;
 import com.cibertec.lms.dominio.matricula.Matricula;
+import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
 import com.cibertec.lms.infraestructura.seguridad.UsuarioAutenticado;
 import com.cibertec.lms.web.dtos.MatriculaRequestDTO;
 import com.cibertec.lms.web.dtos.MatriculaResponseDTO;
@@ -29,12 +30,13 @@ import lombok.RequiredArgsConstructor;
 public class MatriculaController {
 
     private final MatriculaService matriculaService;
+    private final UsuarioRepositorio usuarioRepositorio;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MatriculaResponseDTO> matricular(@Valid @RequestBody MatriculaRequestDTO request) {
         Matricula creada = matriculaService.matricular(request.cursoId(), request.estudianteId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(MatriculaResponseDTO.desde(creada));
+        return ResponseEntity.status(HttpStatus.CREATED).body(MatriculaResponseDTO.desde(creada, null));
     }
 
     @GetMapping("/estudiante/{estudianteId}")
@@ -43,16 +45,20 @@ public class MatriculaController {
             @PathVariable Long estudianteId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         return matriculaService.listarPorEstudiante(estudianteId, actual.id(), actual.rol())
-                .stream().map(MatriculaResponseDTO::desde).toList();
+                .stream().map(m -> MatriculaResponseDTO.desde(m, null)).toList();
     }
 
+    /** Admin/profesor ven los participantes de cualquiera de sus cursos; un estudiante solo
+     *  los de un curso en el que el mismo esta matriculado (ver MatriculaService). */
     @GetMapping("/curso/{cursoId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'PROFESOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'PROFESOR', 'ESTUDIANTE')")
     public List<MatriculaResponseDTO> listarPorCurso(
             @PathVariable Long cursoId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         return matriculaService.listarPorCurso(cursoId, actual.id(), actual.rol())
-                .stream().map(MatriculaResponseDTO::desde).toList();
+                .stream()
+                .map(m -> MatriculaResponseDTO.desde(m, usuarioRepositorio.buscarPorId(m.getEstudianteId()).orElse(null)))
+                .toList();
     }
 
     @DeleteMapping("/{id}")

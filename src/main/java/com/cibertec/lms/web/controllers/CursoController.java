@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cibertec.lms.aplicacion.curso.CursoService;
 import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
+import com.cibertec.lms.dominio.usuario.Usuario;
+import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
 import com.cibertec.lms.infraestructura.seguridad.UsuarioAutenticado;
 import com.cibertec.lms.web.dtos.CursoActualizarRequestDTO;
 import com.cibertec.lms.web.dtos.CursoRequestDTO;
@@ -32,12 +34,13 @@ import lombok.RequiredArgsConstructor;
 public class CursoController {
 
     private final CursoService cursoService;
+    private final UsuarioRepositorio usuarioRepositorio;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoResponseDTO> crear(@Valid @RequestBody CursoRequestDTO request) {
         Curso creado = cursoService.crear(request.titulo(), request.descripcion(), request.profesorId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(CursoResponseDTO.desde(creado));
+        return ResponseEntity.status(HttpStatus.CREATED).body(aDto(creado));
     }
 
     @GetMapping
@@ -48,7 +51,7 @@ public class CursoController {
 
         Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId);
         return new PaginaResponseDTO<>(
-                resultado.contenido().stream().map(CursoResponseDTO::desde).toList(),
+                resultado.contenido().stream().map(this::aDto).toList(),
                 resultado.pagina(),
                 resultado.tamano(),
                 resultado.totalElementos(),
@@ -57,7 +60,7 @@ public class CursoController {
 
     @GetMapping("/{id}")
     public CursoResponseDTO buscarPorId(@PathVariable Long id) {
-        return CursoResponseDTO.desde(cursoService.buscarPorId(id));
+        return aDto(cursoService.buscarPorId(id));
     }
 
     @PutMapping("/{id}")
@@ -68,7 +71,7 @@ public class CursoController {
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Curso actualizado = cursoService.actualizar(
                 id, request.titulo(), request.descripcion(), request.publicado(), actual.id(), actual.rol());
-        return CursoResponseDTO.desde(actualizado);
+        return aDto(actualizado);
     }
 
     @DeleteMapping("/{id}")
@@ -76,5 +79,12 @@ public class CursoController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         cursoService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** El profesor no es sensible (cualquier autenticado ya puede ver el curso), asi que lo resolvemos aqui
+     *  en vez de exigir el rol ADMINISTRADOR que protege /api/usuarios. */
+    private CursoResponseDTO aDto(Curso curso) {
+        Usuario profesor = usuarioRepositorio.buscarPorId(curso.getProfesorId()).orElse(null);
+        return CursoResponseDTO.desde(curso, profesor);
     }
 }

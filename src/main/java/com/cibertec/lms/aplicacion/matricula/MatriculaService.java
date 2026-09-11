@@ -58,7 +58,16 @@ public class MatriculaService {
 
     public List<Matricula> listarPorCurso(Long cursoId, Long usuarioActualId, Rol rolActual) {
         Curso curso = cursoService.buscarPorId(cursoId);
-        cursoService.validarPropietario(curso, usuarioActualId, rolActual);
+
+        if (rolActual == Rol.ESTUDIANTE) {
+            boolean estaMatriculado = matriculaRepositorio.existePorCursoYEstudiante(cursoId, usuarioActualId);
+            if (!estaMatriculado) {
+                throw new AccessDeniedException("Solo puedes ver los participantes de un curso en el que estás matriculado");
+            }
+        } else {
+            cursoService.validarPropietario(curso, usuarioActualId, rolActual);
+        }
+
         return matriculaRepositorio.listarPorCurso(cursoId);
     }
 
