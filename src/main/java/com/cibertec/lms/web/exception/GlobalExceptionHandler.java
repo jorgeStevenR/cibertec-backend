@@ -16,6 +16,7 @@ import org.springframework.web.context.request.WebRequest;
 import com.cibertec.lms.dominio.excepcion.CredencialesInvalidasException;
 import com.cibertec.lms.dominio.excepcion.ReglaNegocioException;
 import com.cibertec.lms.dominio.excepcion.RecursoNoEncontradoException;
+import com.cibertec.lms.dominio.excepcion.VentanaCuestionarioException;
 import com.cibertec.lms.web.dtos.ErrorResponseDTO;
 
 @RestControllerAdvice
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponseDTO> manejarAccesoDenegado(AccessDeniedException ex, WebRequest request) {
         return construir(HttpStatus.FORBIDDEN, "No tienes permiso para realizar esta acción", request);
+    }
+
+    @ExceptionHandler(VentanaCuestionarioException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarVentanaCuestionario(VentanaCuestionarioException ex, WebRequest request) {
+        return construir(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
