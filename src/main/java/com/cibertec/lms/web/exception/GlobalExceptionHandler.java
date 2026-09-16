@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import com.cibertec.lms.dominio.excepcion.CredencialesInvalidasException;
+import com.cibertec.lms.dominio.excepcion.GestionCuentaNoPermitidaException;
 import com.cibertec.lms.dominio.excepcion.ReglaNegocioException;
 import com.cibertec.lms.dominio.excepcion.RecursoNoEncontradoException;
 import com.cibertec.lms.dominio.excepcion.VentanaCuestionarioException;
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VentanaCuestionarioException.class)
     public ResponseEntity<ErrorResponseDTO> manejarVentanaCuestionario(VentanaCuestionarioException ex, WebRequest request) {
+        return construir(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(GestionCuentaNoPermitidaException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarGestionCuentaNoPermitida(GestionCuentaNoPermitidaException ex, WebRequest request) {
         return construir(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 

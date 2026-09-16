@@ -10,7 +10,7 @@ API REST en Java 21 / Spring Boot 4.1 para el LMS de CIBERCTEC: gestión de usua
 
 Funcionando y probado en vivo:
 
-- **Usuarios / Auth**: registro, login JWT, roles (ADMINISTRADOR/PROFESOR/ESTUDIANTE), paginación + búsqueda.
+- **Usuarios / Auth**: registro, login JWT, roles (ADMINISTRADOR/GESTOR_USUARIOS/PROFESOR/ESTUDIANTE), paginación + búsqueda. `GESTOR_USUARIOS` es el único rol con escritura sobre `/api/usuarios` (crear/editar/eliminar/resetear password), limitado a cuentas PROFESOR/ESTUDIANTE; ADMINISTRADOR quedó de solo lectura ahí (lo sigue necesitando para elegir profesor/estudiante al crear cursos y matrículas), pero conserva el resto de la API sin cambios (programas, cursos, matrículas, etc.).
 - **Cursos**: CRUD, paginación + búsqueda, filtro por profesor y por programa, vinculado a `Programa` vía `programaId`.
 - **Programas**: CRUD (solo admin), no se puede borrar uno con cursos asociados (409).
 - **Matrículas**: a curso (existente desde el inicio) y a programa (`MatriculaPrograma`, separada).
@@ -32,11 +32,21 @@ Funcionando y probado en vivo:
 - **MatriculaPrograma no denormaliza nombre/email del estudiante**: el pedido original lo sugería, pero el patrón real ya existente para `Matricula` (curso) resuelve nombre/email al vuelo contra `UsuarioRepositorio` en el DTO de respuesta, no los persiste. Se siguió ese mismo patrón para no arriesgar datos desactualizados si el estudiante cambia su nombre/email.
 - **`Curso.programaId` nullable en la base, obligatorio en el DTO**: la columna quedó nullable para no romper los cursos que ya existían antes de este campo; la obligatoriedad se exige solo en la validación de `CursoRequestDTO`/`CursoActualizarRequestDTO` para cursos nuevos/editados.
 - **Solo ADMIN puede reasignar el programa de un curso**: si un PROFESOR hace `PUT` de un curso propio cambiando `programaId` a un valor distinto del actual, se rechaza con 403 — el resto de los campos del curso sí los puede editar.
-- **Excepción propia para mensajes 403 específicos**: `AccessDeniedException` en este proyecto siempre devuelve el mismo mensaje genérico ("No tienes permiso..."), por diseño del `GlobalExceptionHandler`. Cuando un caso necesita un mensaje 403 distinto (ventana de disponibilidad de un cuestionario: "todavía no abrió" vs "ya venció"), se crea una excepción de dominio propia con su propio `@ExceptionHandler`, en vez de forzar el mensaje genérico.
+- **Excepción propia para mensajes 403 específicos**: `AccessDeniedException` en este proyecto siempre devuelve el mismo mensaje genérico ("No tienes permiso..."), por diseño del `GlobalExceptionHandler`. Cuando un caso necesita un mensaje 403 distinto (ventana de disponibilidad de un cuestionario: "todavía no abrió" vs "ya venció"; ahora también `GestionCuentaNoPermitidaException` para GESTOR_USUARIOS), se crea una excepción de dominio propia con su propio `@ExceptionHandler`, en vez de forzar el mensaje genérico.
+- **Cómo se crean cuentas ADMINISTRADOR/GESTOR_USUARIOS**: ninguno de esos dos roles se puede asignar vía `/api/usuarios` (ni al crear ni al editar — `UsuarioService.validarRolGestionable` lo rechaza con 403 sin importar quién llame). El único mecanismo es un `CommandLineRunner` seeder por rol (`AdminSeeder`, `GestorUsuariosSeeder`) que crea la cuenta al arrancar si el email configurado (`lms.admin.*` / `lms.gestor.*`) todavía no existe — mismo patrón, ya existía para el admin. Si hace falta una segunda cuenta de alguno de estos roles, se inserta directo en la base (no hay Flyway/Liquibase todavía); no hay endpoint para esto a propósito, para no abrir una puerta de escalamiento de privilegios en la API.
+- **`ddl-auto: update` no actualiza CHECK constraints de un enum existente**: al agregar `GESTOR_USUARIOS` a `Rol`, el arranque se cayó al insertar la fila seed — Postgres rechazó el insert con `violates check constraint "usuarios_rol_check"`. Hibernate había generado ese constraint automáticamente al crear la tabla `usuarios` (columna `rol` con `@Enumerated(STRING)`), listando los 3 valores que existían en ese momento; `ddl-auto: update` agrega columnas/tablas nuevas pero no toca constraints ya creados, así que quedó desincronizado con el enum de Java. Se corrigió a mano en Supabase (`DROP CONSTRAINT` + `ADD CONSTRAINT` con la lista de roles actualizada) — **hay que repetir este mismo ajuste manual cada vez que se agregue un valor nuevo a `Rol`** (o a cualquier otro enum mapeado con `@Enumerated(STRING)` en una tabla ya existente), si no el seeder/insert correspondiente va a fallar igual en el próximo arranque.
 - **Sin relaciones JPA**: todo el proyecto usa entidades planas enlazadas por FK manual (`Long xxxId`) + mappers manuales, nunca `@OneToMany`/`@ManyToOne`. Se mantuvo esa convención en todas las features nuevas (Lienzo, Programa, Cuestionario) aunque JPA lo hubiera hecho más corto.
 - **`puntajeMaximo` de un Cuestionario no se guarda como columna**: se calcula sumando el puntaje de las preguntas cada vez que se pide, para que nunca quede desincronizado tras editar/borrar preguntas. En cambio, el `puntajeMaximo` de un `IntentoCuestionario` **sí** se guarda como copia fija al momento de responder, para que la nota histórica de un estudiante no cambie de escala si el profesor edita el cuestionario después.
 
 ## Cambios recientes al contrato de API
+
+**2026-09-16 — Rol GESTOR_USUARIOS (rompe permisos previos de /api/usuarios)**
+- Nuevo valor de enum `Rol`: `GESTOR_USUARIOS` (además de ADMINISTRADOR, PROFESOR, ESTUDIANTE).
+- `POST/PUT/DELETE /api/usuarios/{id}` y `POST /api/usuarios/{id}/resetear-password`: ya no los puede llamar ADMINISTRADOR (ahora dan 403) — pasan a ser exclusivos de GESTOR_USUARIOS.
+- `GET /api/usuarios` y `GET /api/usuarios/{id}`: ahora los puede llamar ADMINISTRADOR o GESTOR_USUARIOS (sin cambios para ADMINISTRADOR).
+- `POST /api/usuarios` y `PUT /api/usuarios/{id}`: si el `rol` del body es ADMINISTRADOR o GESTOR_USUARIOS, 403 con mensaje `"No tienes permiso para gestionar cuentas con este rol."` (`GestionCuentaNoPermitidaException`). Mismo 403 si `PUT`/`DELETE`/reseteo apuntan a un usuario que YA es ADMINISTRADOR o GESTOR_USUARIOS.
+- Cuentas ADMINISTRADOR/GESTOR_USUARIOS ya no se pueden crear por API bajo ninguna combinación de rol/endpoint — ver "Decisiones importantes" (seeders `AdminSeeder`/`GestorUsuariosSeeder`).
+- Pendiente coordinar con frontend Angular: pantalla de Usuarios del panel ADMINISTRADOR pasa a solo lectura; falta el panel nuevo de GESTOR_USUARIOS (con su guard de ruta) — no implementado en esta sesión, solo el backend.
 
 **2026-09-14 — Cuestionario: fechaApertura + disponibilidad**
 - `POST/PUT` de cuestionario ahora aceptan `fechaApertura` (antes solo `fechaEntrega`).
@@ -56,6 +66,10 @@ Funcionando y probado en vivo:
 - Reemplazados `GET/PUT /api/modulos/{id}/lienzo` por 6 endpoints bajo `/api/modulos/{id}/lienzos` y `/api/lienzos/{id}` (una hoja = un id propio, ya no cuelga del módulo directamente).
 
 ## Log de sesiones
+
+### 2026-09-16
+- Diagnosticado un falso "el server no arranca": en realidad tardaba ~50s en levantar (conexión a Postgres remoto en Supabase) y la salida de `mvnw.cmd spring-boot:run` quedaba bufferizada en Windows hasta el cierre del proceso — no había ningún bug.
+- Implementado el rol `GESTOR_USUARIOS`: separa la gestión de cuentas (`/api/usuarios`) del rol ADMINISTRADOR, que la pierde por completo salvo lectura. GESTOR_USUARIOS solo puede tocar cuentas PROFESOR/ESTUDIANTE (no ADMINISTRADOR ni GESTOR_USUARIOS, ni para crear ni para reasignar rol). Cuentas de esos dos roles privilegiados se siembran por `CommandLineRunner` (`GestorUsuariosSeeder`, mismo patrón que `AdminSeeder` ya existente), no por API.
 
 ### 2026-09-11
 - Verificado el contrato real de bloques de contenido (texto/imagen/video) contra lo reportado por el frontend — coincidía exactamente, no había bug.

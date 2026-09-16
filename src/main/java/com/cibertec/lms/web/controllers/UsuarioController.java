@@ -28,12 +28,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
     @PostMapping
+    @PreAuthorize("hasRole('GESTOR_USUARIOS')")
     public ResponseEntity<UsuarioResponseDTO> crear(@Valid @RequestBody UsuarioRequestDTO request) {
         Usuario creado = usuarioService.registrar(
                 request.nombre(),
@@ -46,6 +46,7 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GESTOR_USUARIOS')")
     public PaginaResponseDTO<UsuarioResponseDTO> listar(
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamano,
@@ -61,11 +62,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'GESTOR_USUARIOS')")
     public UsuarioResponseDTO buscarPorId(@PathVariable Long id) {
         return UsuarioResponseDTO.desde(usuarioService.buscarPorId(id));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('GESTOR_USUARIOS')")
     public UsuarioResponseDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioActualizarRequestDTO request) {
         Usuario actualizado = usuarioService.actualizar(
                 id,
@@ -78,12 +81,14 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GESTOR_USUARIOS')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/resetear-password")
+    @PreAuthorize("hasRole('GESTOR_USUARIOS')")
     public ResetPasswordResponseDTO resetearPassword(@PathVariable Long id) {
         return new ResetPasswordResponseDTO(usuarioService.resetearPassword(id));
     }

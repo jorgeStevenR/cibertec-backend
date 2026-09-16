@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.excepcion.EmailYaRegistradoException;
+import com.cibertec.lms.dominio.excepcion.GestionCuentaNoPermitidaException;
 import com.cibertec.lms.dominio.excepcion.UsuarioNoEncontradoException;
+import com.cibertec.lms.dominio.usuario.Rol;
 import com.cibertec.lms.dominio.usuario.Usuario;
 import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
 
@@ -21,7 +23,8 @@ public class UsuarioService {
     private final UsuarioRepositorio usuarioRepositorio;
     private final PasswordEncoder passwordEncoder;
 
-    public Usuario registrar(String nombre, String apellido, String email, String password, com.cibertec.lms.dominio.usuario.Rol rol) {
+    public Usuario registrar(String nombre, String apellido, String email, String password, Rol rol) {
+        validarRolGestionable(rol);
         if (usuarioRepositorio.existePorEmail(email)) {
             throw new EmailYaRegistradoException(email);
         }
@@ -48,8 +51,10 @@ public class UsuarioService {
         return usuarioRepositorio.listarPaginado(pagina, tamano, busqueda);
     }
 
-    public Usuario actualizar(Long id, String nombre, String apellido, com.cibertec.lms.dominio.usuario.Rol rol, boolean activo) {
+    public Usuario actualizar(Long id, String nombre, String apellido, Rol rol, boolean activo) {
         Usuario existente = buscarPorId(id);
+        validarRolGestionable(existente.getRol());
+        validarRolGestionable(rol);
 
         Usuario actualizado = Usuario.builder()
                 .id(existente.getId())
@@ -66,13 +71,15 @@ public class UsuarioService {
     }
 
     public void eliminar(Long id) {
-        buscarPorId(id);
+        Usuario existente = buscarPorId(id);
+        validarRolGestionable(existente.getRol());
         usuarioRepositorio.eliminar(id);
     }
 
-    /** Reseteo asistido por administrador: genera una contraseña temporal, la guarda hasheada y la devuelve en claro para que el admin se la entregue al usuario. */
+    /** Reseteo asistido por el gestor de usuarios: genera una contraseña temporal, la guarda hasheada y la devuelve en claro para que se la entregue al usuario. */
     public String resetearPassword(Long id) {
         Usuario existente = buscarPorId(id);
+        validarRolGestionable(existente.getRol());
         String passwordTemporal = generarPasswordTemporal();
 
         Usuario actualizado = Usuario.builder()
@@ -88,6 +95,15 @@ public class UsuarioService {
 
         usuarioRepositorio.guardar(actualizado);
         return passwordTemporal;
+    }
+
+    /** GESTOR_USUARIOS (único rol que llega a estos métodos, ver @PreAuthorize en UsuarioController) no puede
+     *  crear/editar/eliminar/resetear cuentas ADMINISTRADOR ni GESTOR_USUARIOS, ni asignar esos roles a nadie.
+     *  Esas cuentas se crean fuera de la API (ver GestorUsuariosSeeder/AdminSeeder). */
+    private void validarRolGestionable(Rol rol) {
+        if (rol == Rol.ADMINISTRADOR || rol == Rol.GESTOR_USUARIOS) {
+            throw new GestionCuentaNoPermitidaException("No tienes permiso para gestionar cuentas con este rol.");
+        }
     }
 
     private String generarPasswordTemporal() {

@@ -35,6 +35,9 @@ lms:
   admin:
     email: admin@cibertec.com
     password: Admin123!
+  gestor:
+    email: gestor@cibertec.com
+    password: Gestor123!
   almacenamiento:
     # Estos valores reales van en application-local.yml (gitignored); aquí solo hay placeholders.
     endpoint: ""
