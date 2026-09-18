@@ -1,5 +1,6 @@
 package com.cibertec.lms.dominio.curso;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -21,4 +22,17 @@ public class Curso {
 
     private boolean publicado;
     private LocalDateTime fechaCreacion;
+
+    /** Código único del curso, siempre en mayúsculas y sin espacios en los extremos. Null solo en cursos anteriores a este campo. */
+    private String codigo;
+
+    /** Período académico "AAAA-N" (ej. "2026-2"). Null solo en cursos anteriores a este campo. */
+    private String periodo;
+
+    /** Null = sin límite de estudiantes. */
+    private Integer cupoMaximo;
+
+    /** Fechas de inicio y fin del curso. Null solo en cursos anteriores a estos campos. */
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
 }

@@ -1,6 +1,8 @@
 package com.cibertec.lms.dominio.matricula;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface MatriculaRepositorio {
@@ -14,6 +16,11 @@ public interface MatriculaRepositorio {
     List<Matricula> listarPorCurso(Long cursoId);
 
     boolean existePorCursoYEstudiante(Long cursoId, Long estudianteId);
+
+    int contarPorCurso(Long cursoId);
+
+    /** Una sola consulta agrupada para todos los cursos dados. Los cursos sin matrículas no aparecen en el mapa (el llamador usa 0). */
+    Map<Long, Integer> contarPorCursos(Collection<Long> cursoIds);
 
     void eliminar(Long id);
 }

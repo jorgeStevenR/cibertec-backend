@@ -1,7 +1,10 @@
 package com.cibertec.lms.infraestructura.persistencia.matricula;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -39,6 +42,20 @@ class MatriculaRepositorioImpl implements MatriculaRepositorio {
     @Override
     public boolean existePorCursoYEstudiante(Long cursoId, Long estudianteId) {
         return jpaRepository.existePorCursoYEstudiante(cursoId, estudianteId);
+    }
+
+    @Override
+    public int contarPorCurso(Long cursoId) {
+        return Math.toIntExact(jpaRepository.contarPorCurso(cursoId));
+    }
+
+    @Override
+    public Map<Long, Integer> contarPorCursos(Collection<Long> cursoIds) {
+        if (cursoIds.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.contarPorCursos(cursoIds).stream()
+                .collect(Collectors.toMap(ConteoMatriculasFila::cursoId, fila -> Math.toIntExact(fila.total())));
     }
 
     @Override

@@ -29,6 +29,21 @@ class CursoRepositorioImpl implements CursoRepositorio {
     }
 
     @Override
+    public Optional<Curso> buscarPorIdBloqueando(Long id) {
+        return jpaRepository.buscarPorIdBloqueando(id).map(CursoMapper::aDominio);
+    }
+
+    @Override
+    public Optional<Curso> buscarPorCodigo(String codigo) {
+        return jpaRepository.buscarPorCodigo(codigo).map(CursoMapper::aDominio);
+    }
+
+    @Override
+    public boolean existePorCodigo(String codigo) {
+        return jpaRepository.existePorCodigo(codigo);
+    }
+
+    @Override
     public Pagina<Curso> listarPaginado(int pagina, int tamano, Long profesorId, Long programaId) {
         PageRequest pageRequest = PageRequest.of(pagina, tamano);
         var page = (profesorId != null)

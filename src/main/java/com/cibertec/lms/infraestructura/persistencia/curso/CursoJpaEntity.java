@@ -1,5 +1,6 @@
 package com.cibertec.lms.infraestructura.persistencia.curso;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -44,4 +45,21 @@ public class CursoJpaEntity {
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
+
+    /** Los 5 campos siguientes son nullable a nivel de columna por la misma razón que programa_id: hay cursos creados antes
+     *  de que existieran. Su obligatoriedad se exige en los DTO/servicio, no en el esquema. El índice único de codigo admite varios NULL. */
+    @Column(name = "codigo", length = 30, unique = true)
+    private String codigo;
+
+    @Column(name = "periodo", length = 20)
+    private String periodo;
+
+    @Column(name = "cupo_maximo")
+    private Integer cupoMaximo;
+
+    @Column(name = "fecha_inicio")
+    private LocalDate fechaInicio;
+
+    @Column(name = "fecha_fin")
+    private LocalDate fechaFin;
 }

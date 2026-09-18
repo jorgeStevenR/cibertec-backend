@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cibertec.lms.aplicacion.curso.CursoService;
 import com.cibertec.lms.dominio.curso.Curso;
@@ -26,8 +27,11 @@ public class MatriculaService {
     private final CursoService cursoService;
     private final UsuarioRepositorio usuarioRepositorio;
 
+    /** Transaccional y con el curso bloqueado (FOR UPDATE): dos matrículas simultáneas al mismo curso se ejecutan una tras otra,
+     *  así el conteo contra el cupo no se puede pasar por una carrera. */
+    @Transactional
     public Matricula matricular(Long cursoId, Long estudianteId) {
-        cursoService.buscarPorId(cursoId);
+        Curso curso = cursoService.buscarPorIdBloqueando(cursoId);
 
         Usuario estudiante = usuarioRepositorio.buscarPorId(estudianteId)
                 .orElseThrow(() -> new ReglaNegocioException("El estudiante indicado no existe"));
@@ -38,6 +42,11 @@ public class MatriculaService {
 
         if (matriculaRepositorio.existePorCursoYEstudiante(cursoId, estudianteId)) {
             throw new ReglaNegocioException("El estudiante ya está matriculado en este curso");
+        }
+
+        Integer cupoMaximo = curso.getCupoMaximo();
+        if (cupoMaximo != null && matriculaRepositorio.contarPorCurso(cursoId) >= cupoMaximo) {
+            throw new ReglaNegocioException("El curso alcanzó su cupo máximo (%s)".formatted(CursoService.estudiantes(cupoMaximo)));
         }
 
         Matricula matricula = Matricula.builder()

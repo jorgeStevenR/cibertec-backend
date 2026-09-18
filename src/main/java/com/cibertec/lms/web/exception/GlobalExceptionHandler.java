@@ -7,16 +7,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.cibertec.lms.dominio.excepcion.CredencialesInvalidasException;
 import com.cibertec.lms.dominio.excepcion.GestionCuentaNoPermitidaException;
 import com.cibertec.lms.dominio.excepcion.ReglaNegocioException;
 import com.cibertec.lms.dominio.excepcion.RecursoNoEncontradoException;
+import com.cibertec.lms.dominio.excepcion.SolicitudInvalidaException;
 import com.cibertec.lms.dominio.excepcion.VentanaCuestionarioException;
 import com.cibertec.lms.web.dtos.ErrorResponseDTO;
 
@@ -53,6 +56,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GestionCuentaNoPermitidaException.class)
     public ResponseEntity<ErrorResponseDTO> manejarGestionCuentaNoPermitida(GestionCuentaNoPermitidaException ex, WebRequest request) {
         return construir(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(SolicitudInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarSolicitudInvalida(SolicitudInvalidaException ex, WebRequest request) {
+        return construir(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    /** Parámetro de path/query con formato inválido (ej. ?desde=abc, o un id no numérico); sin esto caería en el 500 genérico. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarTipoParametroInvalido(MethodArgumentTypeMismatchException ex, WebRequest request) {
+        return construir(HttpStatus.BAD_REQUEST, "El parámetro '" + ex.getName() + "' tiene un formato inválido", request);
+    }
+
+    /** Body ilegible o con un valor que no se puede convertir (ej. una fecha que no es yyyy-MM-dd); sin esto caería en el 500 genérico. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarCuerpoIlegible(HttpMessageNotReadableException ex, WebRequest request) {
+        return construir(HttpStatus.BAD_REQUEST,
+                "El cuerpo de la petición no es válido: revisa que sea un JSON correcto y que las fechas tengan el formato yyyy-MM-dd", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

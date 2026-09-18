@@ -1,5 +1,7 @@
 package com.cibertec.lms.web.controllers;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cibertec.lms.aplicacion.curso.ActualizarCursoComando;
+import com.cibertec.lms.aplicacion.curso.CrearCursoComando;
 import com.cibertec.lms.aplicacion.curso.CursoService;
 import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
@@ -41,8 +45,10 @@ public class CursoController {
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoResponseDTO> crear(@Valid @RequestBody CursoRequestDTO request) {
-        Curso creado = cursoService.crear(request.titulo(), request.descripcion(), request.profesorId(), request.programaId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(aDto(creado));
+        Curso creado = cursoService.crear(new CrearCursoComando(
+                request.titulo(), request.descripcion(), request.profesorId(), request.programaId(),
+                request.codigo(), request.periodo(), request.cupoMaximo(), request.fechaInicio(), request.fechaFin()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(aDto(creado, 0));
     }
 
     @GetMapping
@@ -53,8 +59,11 @@ public class CursoController {
             @RequestParam(defaultValue = "20") int tamano) {
 
         Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId, programaId);
+        // Un solo conteo agrupado para toda la página, no uno por curso.
+        Map<Long, Integer> matriculados = cursoService.contarMatriculadosPorCurso(
+                resultado.contenido().stream().map(Curso::getId).toList());
         return new PaginaResponseDTO<>(
-                resultado.contenido().stream().map(this::aDto).toList(),
+                resultado.contenido().stream().map(c -> aDto(c, matriculados.getOrDefault(c.getId(), 0))).toList(),
                 resultado.pagina(),
                 resultado.tamano(),
                 resultado.totalElementos(),
@@ -63,7 +72,7 @@ public class CursoController {
 
     @GetMapping("/{id}")
     public CursoResponseDTO buscarPorId(@PathVariable Long id) {
-        return aDto(cursoService.buscarPorId(id));
+        return aDto(cursoService.buscarPorId(id), cursoService.contarMatriculados(id));
     }
 
     @PutMapping("/{id}")
@@ -73,9 +82,12 @@ public class CursoController {
             @Valid @RequestBody CursoActualizarRequestDTO request,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Curso actualizado = cursoService.actualizar(
-                id, request.titulo(), request.descripcion(), request.publicado(), request.programaId(),
+                id,
+                new ActualizarCursoComando(
+                        request.titulo(), request.descripcion(), request.publicado(), request.programaId(),
+                        request.codigo(), request.periodo(), request.cupoMaximo(), request.fechaInicio(), request.fechaFin()),
                 actual.id(), actual.rol());
-        return aDto(actualizado);
+        return aDto(actualizado, cursoService.contarMatriculados(id));
     }
 
     @DeleteMapping("/{id}")
@@ -87,11 +99,11 @@ public class CursoController {
 
     /** Ni el profesor ni el programa son datos sensibles (cualquier autenticado ya puede ver el curso), asi
      *  que los resolvemos aqui en vez de exigir el rol ADMINISTRADOR que protege /api/usuarios y /api/programas. */
-    private CursoResponseDTO aDto(Curso curso) {
+    private CursoResponseDTO aDto(Curso curso, int matriculados) {
         Usuario profesor = usuarioRepositorio.buscarPorId(curso.getProfesorId()).orElse(null);
         var programa = curso.getProgramaId() != null
                 ? programaRepositorio.buscarPorId(curso.getProgramaId()).orElse(null)
                 : null;
-        return CursoResponseDTO.desde(curso, profesor, programa);
+        return CursoResponseDTO.desde(curso, profesor, programa, matriculados);
     }
 }

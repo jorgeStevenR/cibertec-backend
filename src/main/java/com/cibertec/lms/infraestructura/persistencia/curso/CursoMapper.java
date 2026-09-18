@@ -16,6 +16,11 @@ class CursoMapper {
                 .programaId(entidad.getProgramaId())
                 .publicado(entidad.isPublicado())
                 .fechaCreacion(entidad.getFechaCreacion())
+                .codigo(entidad.getCodigo())
+                .periodo(entidad.getPeriodo())
+                .cupoMaximo(entidad.getCupoMaximo())
+                .fechaInicio(entidad.getFechaInicio())
+                .fechaFin(entidad.getFechaFin())
                 .build();
     }
 
@@ -28,6 +33,11 @@ class CursoMapper {
         entidad.setProgramaId(curso.getProgramaId());
         entidad.setPublicado(curso.isPublicado());
         entidad.setFechaCreacion(curso.getFechaCreacion());
+        entidad.setCodigo(curso.getCodigo());
+        entidad.setPeriodo(curso.getPeriodo());
+        entidad.setCupoMaximo(curso.getCupoMaximo());
+        entidad.setFechaInicio(curso.getFechaInicio());
+        entidad.setFechaFin(curso.getFechaFin());
         return entidad;
     }
 }
