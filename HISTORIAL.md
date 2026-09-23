@@ -45,6 +45,15 @@ Funcionando y probado en vivo:
 
 ## Cambios recientes al contrato de API
 
+**2026-09-23 — Métricas de actividad: último login y último acceso a curso**
+
+- `Usuario` tiene ahora `fechaUltimoLogin` (se actualiza en cada `POST /api/auth/login` exitoso; `null` si nunca inició sesión). No se expone en la respuesta del login ni en `GET /api/usuarios` — por ahora solo viaja a través de `MatriculaResponseDTO` (ver abajo), que es donde el profesor la necesita.
+- Nuevo endpoint `POST /api/matriculas/curso/{cursoId}/registrar-acceso` (solo `ESTUDIANTE`, 204, sin body): actualiza `fechaUltimoAcceso` de la matrícula de ese estudiante en ese curso a `now()`. Pensado para que el frontend lo llame una vez al entrar a la vista del curso; si el estudiante no está matriculado en ese curso, 403 genérico. No hay forma de que el backend sepa esto sin que el frontend haga este llamado explícito.
+- `GET /api/matriculas/curso/{cursoId}` (listado de participantes que ya usa el profesor) ahora devuelve además `fechaUltimoAcceso` (de la matrícula) y `estudianteUltimoLogin` (del usuario), ambos `null` si nunca ocurrieron.
+- Ambas columnas (`fecha_ultimo_login` en `usuarios`, `fecha_ultimo_acceso` en `matriculas`) son nullable, sin default — todo lo anterior a este cambio queda en `null`.
+- **Datos de simulación cargados en la base (creados por API, no por SQL)**: 3 programas nuevos — "Ingeniería de Sistemas" (5 cursos, `SIS101`-`SIS301`), "Gastronomía" (8 cursos, `GAS101`-`GAS204`) y "Psicología" (5 cursos, `PSI101`-`PSI301`), 18 cursos en total, todos publicados, período `2026-2`, `2026-08-01` a `2026-12-15`, cupo 30. 6 profesores (2 por programa) y 24 estudiantes (8 por programa, emails `nombre.apellido@cibertec.test`, contraseña `Sim12345!`), cada uno matriculado en 2-4 cursos de su programa (72 matrículas). Se simuló actividad variada a propósito para probar la métrica nueva: ~1 de cada 5 estudiantes nunca inició sesión (`fechaUltimoLogin` null), otro 1 de cada 5 sí inició sesión pero nunca entró a sus cursos (`fechaUltimoAcceso` null en sus matrículas), y el resto tiene ambas fechas repartidas entre 15 minutos y 30 días atrás (el usuario corrió a mano un `UPDATE` puntual sobre esas mismas filas para dar variedad realista de fechas, ya que un backdating automático vía SQL directo lo bloqueó el auto-mode classifier de Claude Code como "Modify Shared Resources").
+- Pendiente coordinar con frontend: instrumentar el llamado a `registrar-acceso` al entrar a un curso, y agregar las columnas "Último acceso al curso" / "Último login" a la tabla de participantes del profesor (prompt ya entregado al usuario para pasarlo a la sesión del frontend).
+
 **2026-09-18 — Curso: código, período, cupo máximo, fechas y matriculados**
 
 - `POST /api/cursos` (solo ADMINISTRADOR) ahora exige `codigo`, `periodo`, `fechaInicio`, `fechaFin`; `cupoMaximo` es opcional (null = sin límite). Body: `{titulo, descripcion, profesorId, programaId, codigo, periodo, cupoMaximo, fechaInicio, fechaFin}`. Fechas `"yyyy-MM-dd"`. `codigo`: máx. 30, se guarda con trim y en MAYÚSCULAS, único sin distinguir mayúsculas. `periodo`: `^\d{4}-\d{1,2}$` (ej. `2026-2`). `cupoMaximo` >= 1. Errores de validación → 400 con `errores` por campo.
@@ -91,6 +100,10 @@ Roles: `ESTUDIANTE` (solo su propio `{estudianteId}`, si no 403) y `ADMINISTRADO
 - Reemplazados `GET/PUT /api/modulos/{id}/lienzo` por 6 endpoints bajo `/api/modulos/{id}/lienzos` y `/api/lienzos/{id}` (una hoja = un id propio, ya no cuelga del módulo directamente).
 
 ## Log de sesiones
+
+### 2026-09-23
+- Implementadas dos métricas de actividad pedidas por el usuario: `fechaUltimoLogin` en `Usuario` y `fechaUltimoAcceso` en `Matricula`, expuestas en `GET /api/matriculas/curso/{cursoId}` para que el profesor vea cuándo entró cada estudiante a su curso por última vez y cuándo inició sesión por última vez (contrato arriba). Entregado también un prompt para instrumentar esto en el frontend Angular (llamar a `registrar-acceso` al abrir la vista del curso, mostrar las dos columnas nuevas en la tabla de participantes).
+- Cargados datos de simulación (3 programas — Sistemas/Gastronomía/Psicología —, 18 cursos, 6 profesores, 24 estudiantes, 72 matrículas) para poder mirar la métrica funcionando con datos realistas (detalle arriba). Reiniciado el server local para levantar el código nuevo.
 
 ### 2026-09-18
 - Ampliado `Curso` con `codigo`, `periodo`, `cupoMaximo`, `fechaInicio`, `fechaFin` + `matriculados` calculado, cupo al matricular y regla del PROFESOR en el PUT (contrato arriba). Tests: `CursoServiceTest` (12), `MatriculaServiceTest` (6) y `CursoControllerTest` (1, comprueba que el listado hace un único conteo agrupado y ninguno por curso). Datos de simulación de cursos actualizados con código/período/fechas/cupo: 18 `WFS-2026-B` cupo 4 (3 matriculados, casi lleno), 19 `BOR-2026-B` cupo 10 (borrador), 20 `BDR-2026-B` cupo 30, 21 `POO-2026-B` cupo 2 (lleno: Camila y Andres), 22 `RED-2026-B` **sin cupo** (ilimitado), 23 `ING-2026-B` cupo 25, 24 `REQ-2026-B` cupo 40; período `2026-2`. Los cursos 1-3 y 11-16 quedan con los campos nuevos en null a propósito (compatibilidad).

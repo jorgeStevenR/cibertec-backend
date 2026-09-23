@@ -1,11 +1,14 @@
 package com.cibertec.lms.infraestructura.persistencia.matricula;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.cibertec.lms.infraestructura.persistencia.estudiante.CursoMatriculadoFila;
 
@@ -39,4 +42,9 @@ public interface MatriculaJpaRepository extends JpaRepository<MatriculaJpaEntity
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM MatriculaJpaEntity m WHERE m.cursoId = :cursoId AND m.estudianteId = :estudianteId")
     boolean existePorCursoYEstudiante(@Param("cursoId") Long cursoId, @Param("estudianteId") Long estudianteId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE MatriculaJpaEntity m SET m.fechaUltimoAcceso = :fecha WHERE m.cursoId = :cursoId AND m.estudianteId = :estudianteId")
+    void registrarAcceso(@Param("cursoId") Long cursoId, @Param("estudianteId") Long estudianteId, @Param("fecha") LocalDateTime fecha);
 }

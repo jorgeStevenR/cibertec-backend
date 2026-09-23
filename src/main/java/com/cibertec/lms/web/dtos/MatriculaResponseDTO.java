@@ -11,7 +11,9 @@ public record MatriculaResponseDTO(
         Long estudianteId,
         String estudianteNombre,
         String estudianteEmail,
-        LocalDateTime fechaMatricula
+        LocalDateTime fechaMatricula,
+        LocalDateTime fechaUltimoAcceso,
+        LocalDateTime estudianteUltimoLogin
 ) {
     public static MatriculaResponseDTO desde(Matricula matricula, Usuario estudiante) {
         return new MatriculaResponseDTO(
@@ -20,7 +22,9 @@ public record MatriculaResponseDTO(
                 matricula.getEstudianteId(),
                 estudiante != null ? estudiante.getNombre() + " " + estudiante.getApellido() : null,
                 estudiante != null ? estudiante.getEmail() : null,
-                matricula.getFechaMatricula()
+                matricula.getFechaMatricula(),
+                matricula.getFechaUltimoAcceso(),
+                estudiante != null ? estudiante.getFechaUltimoLogin() : null
         );
     }
 }

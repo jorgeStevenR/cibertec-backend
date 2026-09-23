@@ -17,6 +17,7 @@ class UsuarioMapper {
                 .rol(entidad.getRol())
                 .activo(entidad.isActivo())
                 .fechaCreacion(entidad.getFechaCreacion())
+                .fechaUltimoLogin(entidad.getFechaUltimoLogin())
                 .build();
     }
 
@@ -30,6 +31,7 @@ class UsuarioMapper {
         entidad.setRol(usuario.getRol());
         entidad.setActivo(usuario.isActivo());
         entidad.setFechaCreacion(usuario.getFechaCreacion());
+        entidad.setFechaUltimoLogin(usuario.getFechaUltimoLogin());
         return entidad;
     }
 }

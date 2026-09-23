@@ -13,6 +13,7 @@ class MatriculaMapper {
                 .cursoId(entidad.getCursoId())
                 .estudianteId(entidad.getEstudianteId())
                 .fechaMatricula(entidad.getFechaMatricula())
+                .fechaUltimoAcceso(entidad.getFechaUltimoAcceso())
                 .build();
     }
 
@@ -22,6 +23,7 @@ class MatriculaMapper {
         entidad.setCursoId(matricula.getCursoId());
         entidad.setEstudianteId(matricula.getEstudianteId());
         entidad.setFechaMatricula(matricula.getFechaMatricula());
+        entidad.setFechaUltimoAcceso(matricula.getFechaUltimoAcceso());
         return entidad;
     }
 }

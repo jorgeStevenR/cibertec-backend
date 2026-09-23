@@ -67,4 +67,14 @@ public class MatriculaController {
         matriculaService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    /** Llamado por el frontend al entrar a la vista del curso; alimenta la métrica de "último acceso" que ve el profesor. */
+    @PostMapping("/curso/{cursoId}/registrar-acceso")
+    @PreAuthorize("hasRole('ESTUDIANTE')")
+    public ResponseEntity<Void> registrarAcceso(
+            @PathVariable Long cursoId,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        matriculaService.registrarAcceso(cursoId, actual.id());
+        return ResponseEntity.noContent().build();
+    }
 }

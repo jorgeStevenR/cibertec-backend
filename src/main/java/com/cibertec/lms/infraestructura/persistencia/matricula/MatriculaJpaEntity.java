@@ -34,4 +34,7 @@ public class MatriculaJpaEntity {
 
     @Column(name = "fecha_matricula", nullable = false)
     private LocalDateTime fechaMatricula;
+
+    @Column(name = "fecha_ultimo_acceso")
+    private LocalDateTime fechaUltimoAcceso;
 }

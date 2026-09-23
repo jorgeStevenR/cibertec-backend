@@ -1,5 +1,7 @@
 package com.cibertec.lms.aplicacion.auth;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,8 +33,21 @@ public class AuthService {
             throw new ReglaNegocioException("El usuario está inactivo");
         }
 
-        String token = tokenProveedor.generarToken(usuario);
-        return new ResultadoLogin(token, usuario);
+        Usuario actualizado = Usuario.builder()
+                .id(usuario.getId())
+                .nombre(usuario.getNombre())
+                .apellido(usuario.getApellido())
+                .email(usuario.getEmail())
+                .passwordHash(usuario.getPasswordHash())
+                .rol(usuario.getRol())
+                .activo(usuario.isActivo())
+                .fechaCreacion(usuario.getFechaCreacion())
+                .fechaUltimoLogin(LocalDateTime.now())
+                .build();
+        usuarioRepositorio.guardar(actualizado);
+
+        String token = tokenProveedor.generarToken(actualizado);
+        return new ResultadoLogin(token, actualizado);
     }
 
     public record ResultadoLogin(String token, Usuario usuario) {

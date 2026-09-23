@@ -19,4 +19,5 @@ public class Usuario {
     private Rol rol;
     private boolean activo;
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaUltimoLogin;
 }

@@ -50,4 +50,7 @@ public class UsuarioJpaEntity {
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
+
+    @Column(name = "fecha_ultimo_login")
+    private LocalDateTime fechaUltimoLogin;
 }

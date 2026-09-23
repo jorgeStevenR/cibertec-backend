@@ -1,5 +1,6 @@
 package com.cibertec.lms.dominio.matricula;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,4 +24,7 @@ public interface MatriculaRepositorio {
     Map<Long, Integer> contarPorCursos(Collection<Long> cursoIds);
 
     void eliminar(Long id);
+
+    /** Actualización puntual (no pasa por guardar/mapper completo) — se llama en cada visita al curso. */
+    void registrarAcceso(Long cursoId, Long estudianteId, LocalDateTime fecha);
 }

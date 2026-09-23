@@ -15,4 +15,5 @@ public class Matricula {
     private Long cursoId;
     private Long estudianteId;
     private LocalDateTime fechaMatricula;
+    private LocalDateTime fechaUltimoAcceso;
 }

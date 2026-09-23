@@ -85,4 +85,12 @@ public class MatriculaService {
                 .orElseThrow(() -> new MatriculaNoEncontradaException(id));
         matriculaRepositorio.eliminar(id);
     }
+
+    /** Se llama al entrar a la vista del curso; usada para métricas de actividad del estudiante. */
+    public void registrarAcceso(Long cursoId, Long estudianteId) {
+        if (!matriculaRepositorio.existePorCursoYEstudiante(cursoId, estudianteId)) {
+            throw new AccessDeniedException("No tienes permiso para realizar esta acción");
+        }
+        matriculaRepositorio.registrarAcceso(cursoId, estudianteId, LocalDateTime.now());
+    }
 }

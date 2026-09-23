@@ -1,5 +1,6 @@
 package com.cibertec.lms.infraestructura.persistencia.matricula;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -61,5 +62,10 @@ class MatriculaRepositorioImpl implements MatriculaRepositorio {
     @Override
     public void eliminar(Long id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void registrarAcceso(Long cursoId, Long estudianteId, LocalDateTime fecha) {
+        jpaRepository.registrarAcceso(cursoId, estudianteId, fecha);
     }
 }
