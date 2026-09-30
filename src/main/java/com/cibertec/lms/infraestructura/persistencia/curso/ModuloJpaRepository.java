@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ModuloJpaRepository extends JpaRepository<ModuloJpaEntity, Long> {
 
-    @Query("SELECT m FROM ModuloJpaEntity m WHERE m.cursoId = :cursoId ORDER BY m.orden ASC")
+    @Query("SELECT m FROM ModuloJpaEntity m WHERE m.cursoId = :cursoId ORDER BY m.moduloPadreId ASC NULLS FIRST, m.orden ASC")
     List<ModuloJpaEntity> buscarPorCursoOrdenado(@Param("cursoId") Long cursoId);
+
+    @Query("SELECT m FROM ModuloJpaEntity m WHERE m.moduloPadreId = :moduloPadreId ORDER BY m.orden ASC")
+    List<ModuloJpaEntity> buscarHijos(@Param("moduloPadreId") Long moduloPadreId);
 }

@@ -9,7 +9,11 @@ public interface ModuloRepositorio {
 
     Optional<Modulo> buscarPorId(Long id);
 
+    /** Todos los módulos del curso (raíces y submódulos), ordenados por (padre, orden). */
     List<Modulo> listarPorCurso(Long cursoId);
+
+    /** Submódulos directos de ese módulo (lista vacía si no tiene). */
+    List<Modulo> listarHijos(Long moduloPadreId);
 
     void eliminar(Long id);
 }

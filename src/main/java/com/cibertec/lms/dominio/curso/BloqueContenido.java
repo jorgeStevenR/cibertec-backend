@@ -13,6 +13,10 @@ public class BloqueContenido {
 
     private Long id;
     private Long moduloId;
+
+    /** Página a la que pertenece el bloque; null si es un bloque suelto del módulo. Si no es null, moduloId es el de esa página. */
+    private Long paginaId;
+
     private TipoBloque tipo;
 
     /** Solo cuando el tipo es TEXTO. */

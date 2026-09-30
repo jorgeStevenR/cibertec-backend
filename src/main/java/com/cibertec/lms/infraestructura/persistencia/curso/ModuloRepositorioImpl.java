@@ -32,6 +32,11 @@ class ModuloRepositorioImpl implements ModuloRepositorio {
     }
 
     @Override
+    public List<Modulo> listarHijos(Long moduloPadreId) {
+        return jpaRepository.buscarHijos(moduloPadreId).stream().map(ModuloMapper::aDominio).toList();
+    }
+
+    @Override
     public void eliminar(Long id) {
         jpaRepository.deleteById(id);
     }

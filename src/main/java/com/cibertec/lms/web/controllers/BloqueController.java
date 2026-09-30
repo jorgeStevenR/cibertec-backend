@@ -86,6 +86,68 @@ public class BloqueController {
         return bloqueService.listarPorModulo(moduloId).stream().map(BloqueResponseDTO::desde).toList();
     }
 
+    @PostMapping("/api/paginas/{paginaId}/bloques/texto")
+    @PreAuthorize("hasRole('PROFESOR')")
+    public ResponseEntity<BloqueResponseDTO> crearTextoEnPagina(
+            @PathVariable Long paginaId,
+            @Valid @RequestBody TextoBloqueRequestDTO request,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        BloqueContenido creado = bloqueService.crearTextoEnPagina(paginaId, request.texto(), actual.id(), actual.rol());
+        return ResponseEntity.status(HttpStatus.CREATED).body(BloqueResponseDTO.desde(creado));
+    }
+
+    @PostMapping("/api/paginas/{paginaId}/bloques/video")
+    @PreAuthorize("hasRole('PROFESOR')")
+    public ResponseEntity<BloqueResponseDTO> crearVideoEnPagina(
+            @PathVariable Long paginaId,
+            @Valid @RequestBody VideoBloqueRequestDTO request,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        BloqueContenido creado = bloqueService.crearVideoEnPagina(paginaId, request.urlVideo(), actual.id(), actual.rol());
+        return ResponseEntity.status(HttpStatus.CREATED).body(BloqueResponseDTO.desde(creado));
+    }
+
+    @PostMapping("/api/paginas/{paginaId}/bloques/archivo")
+    @PreAuthorize("hasRole('PROFESOR')")
+    public ResponseEntity<BloqueResponseDTO> subirArchivoEnPagina(
+            @PathVariable Long paginaId,
+            @RequestParam TipoBloque tipo,
+            @RequestParam("archivo") MultipartFile archivo,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        try {
+            BloqueContenido creado = bloqueService.subirArchivoEnPagina(
+                    paginaId,
+                    tipo,
+                    archivo.getOriginalFilename(),
+                    archivo.getInputStream(),
+                    archivo.getSize(),
+                    archivo.getContentType(),
+                    actual.id(),
+                    actual.rol());
+            return ResponseEntity.status(HttpStatus.CREATED).body(BloqueResponseDTO.desde(creado));
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo subido", e);
+        }
+    }
+
+    @GetMapping("/api/paginas/{paginaId}/bloques")
+    public List<BloqueResponseDTO> listarPorPagina(
+            @PathVariable Long paginaId,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        return bloqueService.listarPorPagina(paginaId, actual.id(), actual.rol()).stream()
+                .map(BloqueResponseDTO::desde)
+                .toList();
+    }
+
+    @PatchMapping("/api/paginas/{paginaId}/bloques/orden")
+    @PreAuthorize("hasRole('PROFESOR')")
+    public ResponseEntity<Void> reordenarEnPagina(
+            @PathVariable Long paginaId,
+            @Valid @RequestBody ReordenarBloquesRequestDTO request,
+            @AuthenticationPrincipal UsuarioAutenticado actual) {
+        bloqueService.reordenarEnPagina(paginaId, request.ids(), actual.id(), actual.rol());
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/api/bloques/{id}/texto")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'PROFESOR')")
     public BloqueResponseDTO actualizarTexto(

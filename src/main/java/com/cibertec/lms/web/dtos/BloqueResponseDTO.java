@@ -8,6 +8,7 @@ import com.cibertec.lms.dominio.curso.TipoBloque;
 public record BloqueResponseDTO(
         Long id,
         Long moduloId,
+        Long paginaId,
         TipoBloque tipo,
         String texto,
         String nombreArchivo,
@@ -19,6 +20,7 @@ public record BloqueResponseDTO(
         return new BloqueResponseDTO(
                 bloque.getId(),
                 bloque.getModuloId(),
+                bloque.getPaginaId(),
                 bloque.getTipo(),
                 bloque.getTexto(),
                 bloque.getNombreArchivo(),

@@ -13,6 +13,7 @@ class ModuloMapper {
                 .cursoId(entidad.getCursoId())
                 .titulo(entidad.getTitulo())
                 .orden(entidad.getOrden())
+                .moduloPadreId(entidad.getModuloPadreId())
                 .build();
     }
 
@@ -22,6 +23,7 @@ class ModuloMapper {
         entidad.setCursoId(modulo.getCursoId());
         entidad.setTitulo(modulo.getTitulo());
         entidad.setOrden(modulo.getOrden());
+        entidad.setModuloPadreId(modulo.getModuloPadreId());
         return entidad;
     }
 }

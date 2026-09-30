@@ -11,6 +11,7 @@ class BloqueMapper {
         return BloqueContenido.builder()
                 .id(entidad.getId())
                 .moduloId(entidad.getModuloId())
+                .paginaId(entidad.getPaginaId())
                 .tipo(entidad.getTipo())
                 .texto(entidad.getTexto())
                 .rutaArchivo(entidad.getRutaArchivo())
@@ -25,6 +26,7 @@ class BloqueMapper {
         BloqueJpaEntity entidad = new BloqueJpaEntity();
         entidad.setId(bloque.getId());
         entidad.setModuloId(bloque.getModuloId());
+        entidad.setPaginaId(bloque.getPaginaId());
         entidad.setTipo(bloque.getTipo());
         entidad.setTexto(bloque.getTexto());
         entidad.setRutaArchivo(bloque.getRutaArchivo());

@@ -13,4 +13,5 @@ public class Modulo {
     private Long cursoId;
     private String titulo;
     private int orden;
+    private Long moduloPadreId;
 }

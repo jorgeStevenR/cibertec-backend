@@ -7,6 +7,9 @@ public record ModuloRequestDTO(
         @NotBlank(message = "El título es obligatorio")
         String titulo,
 
-        int orden
+        int orden,
+
+        /** Null = módulo raíz. */
+        Long moduloPadreId
 ) {
 }

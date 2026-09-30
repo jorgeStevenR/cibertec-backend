@@ -32,6 +32,9 @@ public class BloqueJpaEntity {
     @Column(name = "modulo_id", nullable = false)
     private Long moduloId;
 
+    @Column(name = "pagina_id")
+    private Long paginaId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoBloque tipo;

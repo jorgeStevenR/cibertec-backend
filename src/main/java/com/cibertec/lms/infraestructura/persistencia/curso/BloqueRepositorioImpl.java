@@ -28,11 +28,21 @@ class BloqueRepositorioImpl implements BloqueRepositorio {
 
     @Override
     public List<BloqueContenido> listarPorModulo(Long moduloId) {
-        return jpaRepository.buscarPorModulo(moduloId).stream().map(BloqueMapper::aDominio).toList();
+        return jpaRepository.buscarSueltosPorModulo(moduloId).stream().map(BloqueMapper::aDominio).toList();
+    }
+
+    @Override
+    public List<BloqueContenido> listarPorPagina(Long paginaId) {
+        return jpaRepository.buscarPorPagina(paginaId).stream().map(BloqueMapper::aDominio).toList();
     }
 
     @Override
     public void eliminar(Long id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void eliminarPorPagina(Long paginaId) {
+        jpaRepository.eliminarPorPagina(paginaId);
     }
 }

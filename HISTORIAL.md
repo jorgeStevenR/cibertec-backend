@@ -16,6 +16,7 @@ Funcionando y probado en vivo:
 - **Matrículas**: a curso (existente desde el inicio) y a programa (`MatriculaPrograma`, separada).
 - **Módulos**: CRUD dentro de un curso.
 - **Bloques de contenido** de módulo: texto / imagen / video / archivo, con reordenamiento.
+- **Páginas** de módulo (como el recurso "Página" de Moodle): título + bloques apilados (los mismos 4 tipos), varias por módulo, reordenables.
 - **Lienzo** (editor libre tipo Canva) por módulo: **varias hojas** por módulo (no una sola), con texto/imagen/video/personaje; URLs de imagen firmadas al vuelo en cada GET (el bucket es privado).
 - **Actividades + Entregas**: talleres con subida de archivo y calificación manual.
 - **Cuestionarios**: quiz de opción múltiple con corrección automática, preguntas/opciones editables, ventana de disponibilidad (`fechaApertura`/`fechaEntrega` con campo `disponible` calculado), un solo intento por estudiante.
@@ -41,9 +42,22 @@ Funcionando y probado en vivo:
 - **Ojo con el límite de conexiones de Supabase**: el pooler está en modo sesión con máximo 15 clientes; dos instancias del backend a la vez (o el backend + un `mvn test` con contexto Spring) pueden agotarlo (`EMAXCONNSESSION`). Si algo no conecta, mirar primero si hay otro proceso Java con la app corriendo.
 - **`ddl-auto: update` no actualiza CHECK constraints de un enum existente**: al agregar `GESTOR_USUARIOS` a `Rol`, el arranque se cayó al insertar la fila seed — Postgres rechazó el insert con `violates check constraint "usuarios_rol_check"`. Hibernate había generado ese constraint automáticamente al crear la tabla `usuarios` (columna `rol` con `@Enumerated(STRING)`), listando los 3 valores que existían en ese momento; `ddl-auto: update` agrega columnas/tablas nuevas pero no toca constraints ya creados, así que quedó desincronizado con el enum de Java. Se corrigió a mano en Supabase (`DROP CONSTRAINT` + `ADD CONSTRAINT` con la lista de roles actualizada) — **hay que repetir este mismo ajuste manual cada vez que se agregue un valor nuevo a `Rol`** (o a cualquier otro enum mapeado con `@Enumerated(STRING)` en una tabla ya existente), si no el seeder/insert correspondiente va a fallar igual en el próximo arranque.
 - **Sin relaciones JPA**: todo el proyecto usa entidades planas enlazadas por FK manual (`Long xxxId`) + mappers manuales, nunca `@OneToMany`/`@ManyToOne`. Se mantuvo esa convención en todas las features nuevas (Lienzo, Programa, Cuestionario) aunque JPA lo hubiera hecho más corto.
+- **Páginas — nombres y diseño**: las clases se llaman `PaginaModulo*` (no `Pagina*`) porque `Pagina<T>` / `PaginaResponseDTO<T>` ya son los tipos genéricos de paginación; URLs (`/api/paginas`) y tabla (`paginas`) sí usan "pagina". Un bloque de página es un `BloqueContenido` con `paginaId` != null (misma tabla `bloques_contenido`, `moduloId` = el de la página); `BloqueService` atiende ambos casos con métodos `...EnPagina` en vez de duplicar la lógica. `PaginaModuloService` depende de `ModuloRepositorio` y `BloqueRepositorio` (no de sus services) porque `ModuloService` lo usa para el borrado en cascada y `BloqueService` para los permisos. `pagina_id` es una columna plana sin FK real en la base (convención del proyecto). Al borrar una página se borran primero las filas y después los archivos del storage (un fallo del storage deja un archivo huérfano, se loguea y no rompe el borrado).
+- **Páginas — permisos distintos de los bloques de módulo**: escribir páginas y sus bloques (incluidos `PUT /api/bloques/{id}/texto` y `DELETE /api/bloques/{id}` sobre un bloque de página) es solo del PROFESOR dueño; el ADMINISTRADOR no crea contenido (decisión de producto). Leer: profesor dueño, ADMINISTRADOR y ESTUDIANTE matriculado; cualquier otro rol (p. ej. GESTOR_USUARIOS u otro profesor) → 403. Los bloques sueltos de módulo **conservan** sus reglas previas (el admin sí puede escribirlos, y `GET /api/modulos/{id}/bloques` sigue sin validar acceso) — no se tocaron a propósito.
+- **Sin tipo PERSONAJE en bloques**: el frontend tiene un tipo `PERSONAJE` y llama a `POST /api/modulos/{id}/bloques/personaje`, que nunca existió en el backend. El usuario decidió (2026-09-30) que no se agregue: el personaje es solo una imagen que se arrastra y no necesita soporte propio en el backend.
 - **`puntajeMaximo` de un Cuestionario no se guarda como columna**: se calcula sumando el puntaje de las preguntas cada vez que se pide, para que nunca quede desincronizado tras editar/borrar preguntas. En cambio, el `puntajeMaximo` de un `IntentoCuestionario` **sí** se guarda como copia fija al momento de responder, para que la nota histórica de un estudiante no cambie de escala si el profesor edita el cuestionario después.
 
 ## Cambios recientes al contrato de API
+
+**2026-09-30 — Páginas dentro de los módulos (nuevo)**
+
+- Respuesta de página: `{id, moduloId, titulo, orden, fechaCreacion}`. `titulo` obligatorio, máx. 150 (400 con `errores.titulo`). `orden` empieza en 1.
+- `GET /api/modulos/{moduloId}/paginas` (ordenadas por `orden`), `POST /api/modulos/{moduloId}/paginas` `{titulo}` → 201 con `orden` = último + 1, `GET/PUT/DELETE /api/paginas/{id}` (PUT `{titulo}`, DELETE 204), `PATCH /api/modulos/{moduloId}/paginas/orden` `{ids}` → 204 (reasigna 1..N).
+- Bloques de página: `GET /api/paginas/{paginaId}/bloques`, `POST .../bloques/texto` `{texto}`, `POST .../bloques/video` `{urlVideo}`, `POST .../bloques/archivo?tipo=IMAGEN|ARCHIVO` (multipart `archivo`), `PATCH .../bloques/orden` `{ids}` → 204. Mismo formato de respuesta que los bloques de módulo. `PUT /api/bloques/{id}/texto`, `GET /api/bloques/{id}/url` y `DELETE /api/bloques/{id}` sirven igual para bloques de página.
+- `BloqueResponseDTO` suma `paginaId` (`null` en bloques sueltos del módulo). **`GET /api/modulos/{id}/bloques` ahora devuelve solo los bloques con `paginaId` null.**
+- PATCH de orden (páginas o bloques de página) con ids que no son exactamente los del módulo/página, o repetidos → 400. El PATCH de orden de bloques **de módulo** sigue dando 409 como antes; lo único que cambió ahí es que ahora también rechaza ids repetidos (antes `[1,1,2]` pasaba y dejaba el orden corrupto).
+- Borrar un módulo borra sus páginas, sus bloques y los archivos de esos bloques en el storage. (Los bloques sueltos, lienzos, actividades y cuestionarios del módulo siguen sin borrarse en cascada, como antes.)
+- No existe `POST .../bloques/personaje` (ver Decisiones).
 
 **2026-09-23 — Métricas de actividad: último login y último acceso a curso**
 
@@ -100,6 +114,10 @@ Roles: `ESTUDIANTE` (solo su propio `{estudianteId}`, si no 403) y `ADMINISTRADO
 - Reemplazados `GET/PUT /api/modulos/{id}/lienzo` por 6 endpoints bajo `/api/modulos/{id}/lienzos` y `/api/lienzos/{id}` (una hoja = un id propio, ya no cuelga del módulo directamente).
 
 ## Log de sesiones
+
+### 2026-09-30
+- Implementado el recurso Página dentro de los módulos (contrato arriba). Probado en vivo contra un servidor reiniciado después de compilar, en el curso 12 / módulo 20 (profesor `profe439141451@test.com`); Camila se matriculó en el curso 12 solo durante la prueba (para los casos de estudiante matriculado y no matriculado) y se la desmatriculó al terminar. Todas las páginas y bloques de prueba se borraron.
+- De paso: `PaginaResponseDTO` (el genérico de paginación) se pisó por accidente al crear el DTO nuevo y se restauró desde git antes de compilar; por eso las clases nuevas se llaman `PaginaModulo*`.
 
 ### 2026-09-23
 - Implementadas dos métricas de actividad pedidas por el usuario: `fechaUltimoLogin` en `Usuario` y `fechaUltimoAcceso` en `Matricula`, expuestas en `GET /api/matriculas/curso/{cursoId}` para que el profesor vea cuándo entró cada estudiante a su curso por última vez y cuándo inició sesión por última vez (contrato arriba). Entregado también un prompt para instrumentar esto en el frontend Angular (llamar a `registrar-acceso` al abrir la vista del curso, mostrar las dos columnas nuevas en la tabla de participantes).

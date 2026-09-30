@@ -9,7 +9,12 @@ public interface BloqueRepositorio {
 
     Optional<BloqueContenido> buscarPorId(Long id);
 
+    /** Solo los bloques sueltos del módulo (paginaId null); los de sus páginas no se incluyen. */
     List<BloqueContenido> listarPorModulo(Long moduloId);
 
+    List<BloqueContenido> listarPorPagina(Long paginaId);
+
     void eliminar(Long id);
+
+    void eliminarPorPagina(Long paginaId);
 }

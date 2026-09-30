@@ -31,4 +31,7 @@ public class ModuloJpaEntity {
 
     @Column(nullable = false)
     private int orden;
+
+    @Column(name = "modulo_padre_id")
+    private Long moduloPadreId;
 }
