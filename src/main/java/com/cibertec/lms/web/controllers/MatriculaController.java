@@ -1,6 +1,7 @@
 package com.cibertec.lms.web.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cibertec.lms.aplicacion.matricula.MatriculaService;
 import com.cibertec.lms.dominio.matricula.Matricula;
+import com.cibertec.lms.dominio.usuario.Usuario;
 import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
 import com.cibertec.lms.infraestructura.seguridad.UsuarioAutenticado;
 import com.cibertec.lms.web.dtos.MatriculaRequestDTO;
@@ -55,9 +57,11 @@ public class MatriculaController {
     public List<MatriculaResponseDTO> listarPorCurso(
             @PathVariable Long cursoId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
-        return matriculaService.listarPorCurso(cursoId, actual.id(), actual.rol())
-                .stream()
-                .map(m -> MatriculaResponseDTO.desde(m, usuarioRepositorio.buscarPorId(m.getEstudianteId()).orElse(null)))
+        List<Matricula> matriculas = matriculaService.listarPorCurso(cursoId, actual.id(), actual.rol());
+        Map<Long, Usuario> estudiantes = usuarioRepositorio.buscarPorIds(
+                matriculas.stream().map(Matricula::getEstudianteId).distinct().toList());
+        return matriculas.stream()
+                .map(m -> MatriculaResponseDTO.desde(m, estudiantes.get(m.getEstudianteId())))
                 .toList();
     }
 

@@ -68,8 +68,11 @@ public class IntentoCuestionarioController {
     public List<IntentoResumenResponseDTO> listarPorCuestionario(
             @PathVariable Long cuestionarioId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
-        return intentoCuestionarioService.listarPorCuestionario(cuestionarioId, actual.id(), actual.rol()).stream()
-                .map(i -> IntentoResumenResponseDTO.desde(i, usuarioRepositorio.buscarPorId(i.getEstudianteId()).orElse(null)))
+        List<IntentoCuestionario> intentos = intentoCuestionarioService.listarPorCuestionario(cuestionarioId, actual.id(), actual.rol());
+        Map<Long, Usuario> estudiantes = usuarioRepositorio.buscarPorIds(
+                intentos.stream().map(IntentoCuestionario::getEstudianteId).distinct().toList());
+        return intentos.stream()
+                .map(i -> IntentoResumenResponseDTO.desde(i, estudiantes.get(i.getEstudianteId())))
                 .toList();
     }
 

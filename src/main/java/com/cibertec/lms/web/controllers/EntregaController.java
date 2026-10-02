@@ -3,6 +3,7 @@ package com.cibertec.lms.web.controllers;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,8 +58,12 @@ public class EntregaController {
     public List<EntregaResponseDTO> listarPorActividad(
             @PathVariable Long actividadId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
-        return entregaService.listarPorActividad(actividadId, actual.id(), actual.rol())
-                .stream().map(this::aDto).toList();
+        List<Entrega> entregas = entregaService.listarPorActividad(actividadId, actual.id(), actual.rol());
+        Map<Long, Usuario> estudiantes = usuarioRepositorio.buscarPorIds(
+                entregas.stream().map(Entrega::getEstudianteId).distinct().toList());
+        return entregas.stream()
+                .map(e -> EntregaResponseDTO.desde(e, estudiantes.get(e.getEstudianteId())))
+                .toList();
     }
 
     @GetMapping("/api/actividades/{actividadId}/entregas/mia")

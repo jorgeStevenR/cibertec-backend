@@ -1,6 +1,8 @@
 package com.cibertec.lms.web.controllers;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import com.cibertec.lms.aplicacion.curso.CrearCursoComando;
 import com.cibertec.lms.aplicacion.curso.CursoService;
 import com.cibertec.lms.dominio.comun.Pagina;
 import com.cibertec.lms.dominio.curso.Curso;
+import com.cibertec.lms.dominio.programa.Programa;
 import com.cibertec.lms.dominio.programa.ProgramaRepositorio;
 import com.cibertec.lms.dominio.usuario.Usuario;
 import com.cibertec.lms.dominio.usuario.UsuarioRepositorio;
@@ -59,11 +62,23 @@ public class CursoController {
             @RequestParam(defaultValue = "20") int tamano) {
 
         Pagina<Curso> resultado = cursoService.listarPaginado(pagina, tamano, profesorId, programaId);
-        // Un solo conteo agrupado para toda la página, no uno por curso.
-        Map<Long, Integer> matriculados = cursoService.contarMatriculadosPorCurso(
-                resultado.contenido().stream().map(Curso::getId).toList());
+        List<Curso> cursos = resultado.contenido();
+
+        // Una sola consulta agrupada por tipo de entidad para toda la página, no una por curso (evita N+1).
+        Map<Long, Integer> matriculados = cursoService.contarMatriculadosPorCurso(cursos.stream().map(Curso::getId).toList());
+        Map<Long, Usuario> profesores = usuarioRepositorio.buscarPorIds(
+                cursos.stream().map(Curso::getProfesorId).distinct().toList());
+        Map<Long, Programa> programas = programaRepositorio.buscarPorIds(
+                cursos.stream().map(Curso::getProgramaId).filter(Objects::nonNull).distinct().toList());
+
         return new PaginaResponseDTO<>(
-                resultado.contenido().stream().map(c -> aDto(c, matriculados.getOrDefault(c.getId(), 0))).toList(),
+                cursos.stream()
+                        .map(c -> CursoResponseDTO.desde(
+                                c,
+                                profesores.get(c.getProfesorId()),
+                                c.getProgramaId() != null ? programas.get(c.getProgramaId()) : null,
+                                matriculados.getOrDefault(c.getId(), 0)))
+                        .toList(),
                 resultado.pagina(),
                 resultado.tamano(),
                 resultado.totalElementos(),

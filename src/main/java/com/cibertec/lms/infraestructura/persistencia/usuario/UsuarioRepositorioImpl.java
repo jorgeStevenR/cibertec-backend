@@ -1,6 +1,9 @@
 package com.cibertec.lms.infraestructura.persistencia.usuario;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -27,6 +30,16 @@ class UsuarioRepositorioImpl implements UsuarioRepositorio {
     @Override
     public Optional<Usuario> buscarPorId(Long id) {
         return jpaRepository.findById(id).map(UsuarioMapper::aDominio);
+    }
+
+    @Override
+    public Map<Long, Usuario> buscarPorIds(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findAllById(ids).stream()
+                .map(UsuarioMapper::aDominio)
+                .collect(Collectors.toMap(Usuario::getId, u -> u));
     }
 
     @Override

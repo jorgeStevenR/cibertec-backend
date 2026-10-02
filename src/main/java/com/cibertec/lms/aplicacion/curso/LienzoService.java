@@ -194,10 +194,10 @@ public class LienzoService {
 
     private void renovarSiEsUrlPropia(ObjectNode elemento, String campo) {
         JsonNode valor = elemento.get(campo);
-        if (valor == null || !valor.isTextual()) {
+        if (valor == null || !valor.isString()) {
             return;
         }
-        extraerRutaSiEsPropia(valor.asText())
+        extraerRutaSiEsPropia(valor.asString())
                 .ifPresent(ruta -> elemento.put(campo, almacenamientoPuerto.generarUrlDescarga(ruta)));
     }
 

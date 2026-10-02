@@ -1,6 +1,9 @@
 package com.cibertec.lms.infraestructura.persistencia.programa;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -26,6 +29,16 @@ class ProgramaRepositorioImpl implements ProgramaRepositorio {
     @Override
     public Optional<Programa> buscarPorId(Long id) {
         return jpaRepository.findById(id).map(ProgramaMapper::aDominio);
+    }
+
+    @Override
+    public Map<Long, Programa> buscarPorIds(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findAllById(ids).stream()
+                .map(ProgramaMapper::aDominio)
+                .collect(Collectors.toMap(Programa::getId, p -> p));
     }
 
     @Override
