@@ -37,7 +37,7 @@ public class PreguntaController {
             @Valid @RequestBody PreguntaRequestDTO request,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Pregunta creada = preguntaService.crear(
-                cuestionarioId, request.enunciado(), request.puntaje(), aOpciones(request.opciones()),
+                cuestionarioId, request.tipoEfectivo(), request.enunciado(), request.puntaje(), aOpciones(request.opciones()),
                 actual.id(), actual.rol());
         return ResponseEntity.status(HttpStatus.CREATED).body(PreguntaResponseDTO.desde(creada, true));
     }
@@ -49,7 +49,7 @@ public class PreguntaController {
             @Valid @RequestBody PreguntaRequestDTO request,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Pregunta actualizada = preguntaService.actualizar(
-                id, request.enunciado(), request.puntaje(), aOpciones(request.opciones()),
+                id, request.tipoEfectivo(), request.enunciado(), request.puntaje(), aOpciones(request.opciones()),
                 actual.id(), actual.rol());
         return PreguntaResponseDTO.desde(actualizada, true);
     }
@@ -62,6 +62,9 @@ public class PreguntaController {
     }
 
     private List<Opcion> aOpciones(List<OpcionRequestDTO> opciones) {
+        if (opciones == null) {
+            return List.of();
+        }
         return opciones.stream()
                 .map(o -> Opcion.builder().id(o.id()).texto(o.texto()).esCorrecta(o.esCorrecta()).build())
                 .toList();

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.cibertec.lms.dominio.cuestionario.EstadoIntento;
 import com.cibertec.lms.dominio.estudiante.ActividadDeEstudiante;
 import com.cibertec.lms.dominio.estudiante.AvanceEstudianteRepositorio;
 import com.cibertec.lms.dominio.estudiante.CuestionarioDeEstudiante;
@@ -52,7 +53,8 @@ class AvanceEstudianteRepositorioImpl implements AvanceEstudianteRepositorio {
                 .map(f -> new CuestionarioDeEstudiante(
                         f.id(), f.titulo(), f.fechaLimite(), f.puntajeMaximoActual().doubleValue(), f.fechaCreacion(),
                         f.moduloId(), f.moduloTitulo(), f.moduloOrden(), f.cursoId(),
-                        f.fechaRendicion(), f.nota(), f.puntajeMaximoIntento()))
+                        f.fechaRendicion(), f.nota(), f.puntajeMaximoIntento(),
+                        f.estadoIntento() == EstadoIntento.PENDIENTE_REVISION))
                 .toList();
     }
 }

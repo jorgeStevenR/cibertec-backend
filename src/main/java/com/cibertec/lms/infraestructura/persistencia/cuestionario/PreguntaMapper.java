@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.cibertec.lms.dominio.cuestionario.Opcion;
 import com.cibertec.lms.dominio.cuestionario.Pregunta;
+import com.cibertec.lms.dominio.cuestionario.TipoPregunta;
 
 class PreguntaMapper {
 
@@ -23,6 +24,8 @@ class PreguntaMapper {
         return Pregunta.builder()
                 .id(entidad.getId())
                 .cuestionarioId(entidad.getCuestionarioId())
+                // Las preguntas anteriores al campo "tipo" eran todas de opción múltiple.
+                .tipo(entidad.getTipo() != null ? entidad.getTipo() : TipoPregunta.OPCION_MULTIPLE)
                 .enunciado(entidad.getEnunciado())
                 .puntaje(entidad.getPuntaje())
                 .orden(entidad.getOrden())
@@ -34,6 +37,7 @@ class PreguntaMapper {
         PreguntaJpaEntity entidad = new PreguntaJpaEntity();
         entidad.setId(pregunta.getId());
         entidad.setCuestionarioId(pregunta.getCuestionarioId());
+        entidad.setTipo(pregunta.getTipo());
         entidad.setEnunciado(pregunta.getEnunciado());
         entidad.setPuntaje(pregunta.getPuntaje());
         entidad.setOrden(pregunta.getOrden());

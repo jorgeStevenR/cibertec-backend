@@ -2,6 +2,7 @@ package com.cibertec.lms.infraestructura.persistencia.cuestionario;
 
 import java.util.List;
 
+import com.cibertec.lms.dominio.cuestionario.EstadoIntento;
 import com.cibertec.lms.dominio.cuestionario.IntentoCuestionario;
 import com.cibertec.lms.dominio.cuestionario.RespuestaValor;
 
@@ -17,6 +18,8 @@ class IntentoCuestionarioMapper {
                 .estudianteId(entidad.getEstudianteId())
                 .nota(entidad.getNota())
                 .puntajeMaximo(entidad.getPuntajeMaximo())
+                // Los intentos anteriores al campo "estado" solo tenían preguntas cerradas: ya estaban calificados.
+                .estado(entidad.getEstado() != null ? entidad.getEstado() : EstadoIntento.CALIFICADO)
                 .fechaEntrega(entidad.getFechaEntrega())
                 .respuestas(respuestas)
                 .build();
@@ -29,7 +32,12 @@ class IntentoCuestionarioMapper {
         entidad.setEstudianteId(intento.getEstudianteId());
         entidad.setNota(intento.getNota());
         entidad.setPuntajeMaximo(intento.getPuntajeMaximo());
+        entidad.setEstado(intento.getEstado());
         entidad.setFechaEntrega(intento.getFechaEntrega());
         return entidad;
+    }
+
+    static RespuestaValor aDominio(RespuestaIntentoJpaEntity entidad) {
+        return new RespuestaValor(entidad.getPreguntaId(), entidad.getOpcionId(), entidad.getTextoRespuesta(), entidad.getPuntajeObtenido());
     }
 }

@@ -29,6 +29,15 @@ public class RespuestaIntentoJpaEntity {
     @Column(name = "pregunta_id", nullable = false)
     private Long preguntaId;
 
-    @Column(name = "opcion_id", nullable = false)
+    /** Null en respuestas a preguntas ABIERTA. La columna nació NOT NULL: ddl-auto no la relaja solo, se cambió a mano (ver HISTORIAL.md). */
+    @Column(name = "opcion_id")
     private Long opcionId;
+
+    /** Texto escrito por el estudiante; solo en respuestas a preguntas ABIERTA. */
+    @Column(name = "texto_respuesta", columnDefinition = "text")
+    private String textoRespuesta;
+
+    /** Puntaje que asignó el profesor a una respuesta abierta; null mientras no la califique. */
+    @Column(name = "puntaje_obtenido")
+    private Double puntajeObtenido;
 }

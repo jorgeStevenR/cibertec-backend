@@ -2,8 +2,12 @@ package com.cibertec.lms.infraestructura.persistencia.cuestionario;
 
 import java.time.LocalDateTime;
 
+import com.cibertec.lms.dominio.cuestionario.EstadoIntento;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -37,6 +41,10 @@ public class IntentoCuestionarioJpaEntity {
 
     @Column(name = "puntaje_maximo", nullable = false)
     private double puntajeMaximo;
+
+    /** Nullable solo por los intentos anteriores a este campo (todos de preguntas cerradas): null se lee como CALIFICADO. */
+    @Enumerated(EnumType.STRING)
+    private EstadoIntento estado;
 
     @Column(name = "fecha_entrega", nullable = false)
     private LocalDateTime fechaEntrega;

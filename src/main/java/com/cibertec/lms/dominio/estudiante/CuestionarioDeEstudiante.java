@@ -16,7 +16,9 @@ public record CuestionarioDeEstudiante(
         Long cursoId,
         LocalDateTime fechaRendicion,
         Double nota,
-        Double puntajeMaximoDelIntento
+        Double puntajeMaximoDelIntento,
+        /** Un intento con respuestas abiertas sin calificar tiene nota parcial: no cuenta como calificado. */
+        boolean pendienteRevision
 ) {
     public boolean rendido() {
         return fechaRendicion != null;

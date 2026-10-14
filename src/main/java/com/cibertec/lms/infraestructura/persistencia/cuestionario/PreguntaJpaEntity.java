@@ -1,7 +1,11 @@
 package com.cibertec.lms.infraestructura.persistencia.cuestionario;
 
+import com.cibertec.lms.dominio.cuestionario.TipoPregunta;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,6 +29,10 @@ public class PreguntaJpaEntity {
 
     @Column(name = "cuestionario_id", nullable = false)
     private Long cuestionarioId;
+
+    /** Nullable solo por las preguntas creadas antes de este campo: null se lee como OPCION_MULTIPLE (ver PreguntaMapper). */
+    @Enumerated(EnumType.STRING)
+    private TipoPregunta tipo;
 
     @Column(columnDefinition = "text", nullable = false)
     private String enunciado;

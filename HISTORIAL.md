@@ -19,11 +19,16 @@ Funcionando y probado en vivo:
 - **Páginas** de módulo (como el recurso "Página" de Moodle): título + bloques apilados (los mismos 4 tipos), varias por módulo, reordenables.
 - **Lienzo** (editor libre tipo Canva) por módulo: **varias hojas** por módulo (no una sola), con texto/imagen/video/personaje; URLs de imagen firmadas al vuelo en cada GET (el bucket es privado).
 - **Actividades + Entregas**: talleres con subida de archivo y calificación manual.
-- **Cuestionarios**: quiz de opción múltiple con corrección automática, preguntas/opciones editables, ventana de disponibilidad (`fechaApertura`/`fechaEntrega` con campo `disponible` calculado), un solo intento por estudiante.
+- **Cuestionarios**: preguntas de opción múltiple, verdadero/falso y respuesta abierta; las cerradas se corrigen solas al enviar y las abiertas las califica el profesor a mano (puntaje parcial entre 0 y el de la pregunta). Ventana de disponibilidad (`fechaApertura`/`fechaEntrega` con campo `disponible` calculado), un solo intento por estudiante.
+
+## Alcance (plan de práctica)
+
+El LMS es el proyecto de práctica profesional (UNIMINUTO, convenio con CIBERCTEC), con un plan de trabajo firmado de 12 semanas: **MVP funcional y controlado, no una réplica de Moodle**. Decisión del usuario (2026-10-14): primero cerrar lo que falta del plan — tipos de pregunta (hecho), bugs conocidos, despliegue, pruebas con usuarios y manuales — y recién después pulir o sumar features fuera del plan (avisos, notificaciones, asistencia, etc.).
 
 ## Próximos pasos
 
-- **Deuda de tests**: solo hay `LmsApplicationTests` (arranque del contexto) y `AvanceEstudianteServiceTest` (Mockito, primer test de un service, 2026-09-18); el resto de services/controllers sigue sin tests. Anotado en `CLAUDE.md`, no bloqueante pero real.
+- **Deuda de tests**: hay tests unitarios de `AvanceEstudianteService`, `CursoService`, `MatriculaService`, `IntentoCuestionarioService` y del validador `OpcionesSegunTipo`, más algunos de repositorio/controller; el resto de services/controllers sigue sin tests. Anotado en `CLAUDE.md`, no bloqueante pero real.
+- **Frontend de tipos de pregunta**: el backend ya expone V/F, abiertas y la calificación manual (ver contrato 2026-10-14); falta la UI (selector de tipo en el editor, cuadro de texto para el estudiante, pantalla de revisión del profesor).
 - **"Cerrar curso"**: se discutió (bloquear edición/entregas del profesor y estudiante tras cerrar un curso) pero no se implementó — el usuario quería definir el diseño antes de construirlo (ver Decisiones).
 - **LSP para Java**: no hay ningún plugin de LSP disponible en el marketplace `anthropics/claude-code` agregado a este proyecto. Si aparece uno en el futuro, agregarlo.
 
@@ -48,7 +53,21 @@ Funcionando y probado en vivo:
 - **`puntajeMaximo` de un Cuestionario no se guarda como columna**: se calcula sumando el puntaje de las preguntas cada vez que se pide, para que nunca quede desincronizado tras editar/borrar preguntas. En cambio, el `puntajeMaximo` de un `IntentoCuestionario` **sí** se guarda como copia fija al momento de responder, para que la nota histórica de un estudiante no cambie de escala si el profesor edita el cuestionario después.
 - **Patrón obligatorio en listados: resolver entidades relacionadas en lote, nunca por fila**: cada fila de un listado NO debe disparar su propia consulta para resolver nombre/email de usuario o nombre de programa — eso es N+1 y con la base en Supabase remota cada consulta extra paga la latencia de red completa (~0.5s medidos). El patrón (ya usado por `contarMatriculadosPorCurso`, ahora también por `UsuarioRepositorio.buscarPorIds`/`ProgramaRepositorio.buscarPorIds`): juntar los ids de la página, una sola consulta `WHERE id IN (...)` (vía `findAllById`), devolver un `Map<Long, X>`, armar los DTO desde ese mapa. El endpoint de un solo elemento (`GET /{id}`) no necesita este patrón.
 
+- **Preguntas abiertas — cómo se califica**: al enviar, las cerradas suman solas y cada abierta con texto queda con `puntajeObtenido` null; si hay alguna, el intento queda `PENDIENTE_REVISION`. Al calificar, la nota del intento se ajusta por **diferencia** (resta lo que tenía esa respuesta y suma lo nuevo), así que las cerradas no se recalculan contra opciones que el profesor pudo haber editado después, y recalificar reemplaza en vez de sumar. Una abierta sin responder (o en blanco) cuenta 0 y no hace falta calificarla. Mientras el intento está pendiente, el estudiante **no ve la nota** (`mi-intento` la manda null) y en Calificaciones el cuestionario aparece `ENTREGADA` sin nota, igual que una tarea sin corregir: la nota parcial no cuenta en el total. El tope del puntaje manual es el puntaje **actual** de la pregunta (no se guarda una copia por respuesta).
+- **Verdadero/falso es una opción múltiple de dos opciones**: se guarda igual (dos filas en `opciones`, una correcta) y se corrige con la misma lógica; el frontend manda los textos "Verdadero"/"Falso". El tipo de una pregunta **no se puede cambiar** después de creada (409): si una pregunta ya respondida pasara de cerrada a abierta, sus respuestas guardadas no tendrían sentido.
+- **Columnas nuevas de cuestionarios y datos anteriores**: `preguntas.tipo` e `intentos_cuestionario.estado` son nullable (null se lee como `OPCION_MULTIPLE` / `CALIFICADO` en los mappers, que es lo que eran todos los registros anteriores). `respuestas_intento.opcion_id` nació `NOT NULL` y una respuesta abierta no tiene opción: `ddl-auto: update` no relaja constraints existentes, así que se corrió a mano (2026-10-14) `ALTER TABLE respuestas_intento ALTER COLUMN opcion_id DROP NOT NULL` contra Supabase. Hibernate creó `tipo` y `estado` con CHECK constraint de los valores actuales del enum: **mismo cuidado que con `Rol`** si se agrega un valor nuevo a `TipoPregunta` o `EstadoIntento`.
+
 ## Cambios recientes al contrato de API
+
+**2026-10-14 — Cuestionarios: verdadero/falso, respuesta abierta y calificación manual**
+
+- Pregunta (request y response) suma `tipo`: `OPCION_MULTIPLE | VERDADERO_FALSO | ABIERTA`. En el request es opcional (null = `OPCION_MULTIPLE`, compatible con el frontend actual). Reglas (400 con `errores.opciones`): opción múltiple ≥ 1 opción y exactamente una correcta; V/F exactamente 2 opciones y una correcta; abierta sin opciones (vacía u omitida). `PUT /api/preguntas/{id}` con un `tipo` distinto al actual → 409.
+- `POST /api/cuestionarios/{id}/intentos`: cada respuesta es `{preguntaId, opcionId}` (cerradas) o `{preguntaId, texto}` (abiertas, máx. 5000). `opcionId` dejó de ser obligatorio.
+- Intento (`IntentoResponseDTO` e `IntentoResumenResponseDTO`) suma `estado`: `CALIFICADO | PENDIENTE_REVISION`. En las respuestas al **estudiante** (`POST .../intentos`, `GET .../mi-intento`) `nota` viene **null** mientras esté `PENDIENTE_REVISION`; al profesor siempre le llega la nota parcial.
+- `PreguntaConRespuestaResponseDTO` suma `tipo`, `textoRespuesta` y `puntajeObtenido` (abiertas; null = sin calificar).
+- Nuevo `GET /api/intentos/{id}` (ADMINISTRADOR/PROFESOR dueño): detalle de un intento con todas las respuestas, para revisar.
+- Nuevo `PATCH /api/intentos/{intentoId}/preguntas/{preguntaId}/calificar` `{puntaje}` (ADMINISTRADOR/PROFESOR dueño) → 200 con el intento actualizado. 400 si `puntaje` falta o es negativo; 409 si supera el puntaje de la pregunta, si la pregunta no es abierta o si el estudiante no la respondió; 404 si el intento no existe o la pregunta no es de ese cuestionario.
+- Calificaciones del estudiante: un cuestionario con abiertas sin calificar viene con `estado: "ENTREGADA"` y `nota: null` (antes un cuestionario rendido siempre era `RENDIDO` con nota).
 
 **2026-09-30 — Páginas dentro de los módulos (nuevo)**
 

@@ -61,7 +61,7 @@ class AvanceEstudianteServiceTest {
 
     private static CuestionarioDeEstudiante cuestionario(long id, LocalDateTime limite, LocalDateTime rendicion, Double nota, Double maxIntento) {
         return new CuestionarioDeEstudiante(id, "Q" + id, limite, 12.0, LocalDateTime.of(2026, 1, 1, 0, 0).plusMinutes(id),
-                7L, "Modulo 1", 1, CURSO, rendicion, nota, maxIntento);
+                7L, "Modulo 1", 1, CURSO, rendicion, nota, maxIntento, false);
     }
 
     @Test

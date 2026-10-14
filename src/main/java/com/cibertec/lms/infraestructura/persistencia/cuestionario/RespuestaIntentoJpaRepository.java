@@ -1,6 +1,7 @@
 package com.cibertec.lms.infraestructura.persistencia.cuestionario;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,6 +13,9 @@ public interface RespuestaIntentoJpaRepository extends JpaRepository<RespuestaIn
 
     @Query("SELECT r FROM RespuestaIntentoJpaEntity r WHERE r.intentoId = :intentoId")
     List<RespuestaIntentoJpaEntity> buscarPorIntento(@Param("intentoId") Long intentoId);
+
+    @Query("SELECT r FROM RespuestaIntentoJpaEntity r WHERE r.intentoId = :intentoId AND r.preguntaId = :preguntaId")
+    Optional<RespuestaIntentoJpaEntity> buscarPorIntentoYPregunta(@Param("intentoId") Long intentoId, @Param("preguntaId") Long preguntaId);
 
     @Modifying
     @Transactional

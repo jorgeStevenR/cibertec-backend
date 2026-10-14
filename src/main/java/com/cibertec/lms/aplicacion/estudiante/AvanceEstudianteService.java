@@ -161,12 +161,18 @@ public class AvanceEstudianteService {
                 a.puntajeMaximo(), a.nota(), estado, a.fechaEntrega(), a.fechaCalificacion(), a.comentarioDocente());
     }
 
-    /** Un cuestionario rendido ya está calificado (se autocalifica al enviarlo), así que su fecha de calificación es la de la rendición.
+    /** Un cuestionario rendido sin abiertas pendientes ya está calificado (se autocalifica al enviarlo), así que su fecha de
+     *  calificación es la de la rendición. Con abiertas sin calificar queda ENTREGADA y sin nota, igual que una actividad
+     *  entregada que el profesor todavía no corrigió: su nota parcial no cuenta en el total.
      *  El puntaje máximo de un rendido es el que quedó guardado en el intento, para que coincida con la escala de su nota. */
     private ItemCalificacion aItem(CuestionarioDeEstudiante q) {
         if (!q.rendido()) {
             return new ItemCalificacion(TipoItem.CUESTIONARIO, q.id(), q.titulo(), q.moduloId(), q.moduloTitulo(),
                     q.puntajeMaximoActual(), null, EstadoCalificacion.SIN_ENTREGAR, null, null, null);
+        }
+        if (q.pendienteRevision()) {
+            return new ItemCalificacion(TipoItem.CUESTIONARIO, q.id(), q.titulo(), q.moduloId(), q.moduloTitulo(),
+                    q.puntajeMaximoDelIntento(), null, EstadoCalificacion.ENTREGADA, q.fechaRendicion(), null, null);
         }
         return new ItemCalificacion(TipoItem.CUESTIONARIO, q.id(), q.titulo(), q.moduloId(), q.moduloTitulo(),
                 q.puntajeMaximoDelIntento(), q.nota(), EstadoCalificacion.RENDIDO, q.fechaRendicion(), q.fechaRendicion(), null);
