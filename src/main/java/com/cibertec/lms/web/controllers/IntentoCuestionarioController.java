@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cibertec.lms.aplicacion.cuestionario.CuestionarioService;
 import com.cibertec.lms.aplicacion.cuestionario.IntentoCuestionarioService;
 import com.cibertec.lms.aplicacion.cuestionario.PreguntaService;
 import com.cibertec.lms.dominio.cuestionario.IntentoCuestionario;
@@ -38,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class IntentoCuestionarioController {
 
     private final IntentoCuestionarioService intentoCuestionarioService;
+    private final CuestionarioService cuestionarioService;
     private final PreguntaService preguntaService;
     private final UsuarioRepositorio usuarioRepositorio;
 
@@ -51,7 +53,7 @@ public class IntentoCuestionarioController {
                 .map(r -> new RespuestaValor(r.preguntaId(), r.opcionId(), r.texto(), null))
                 .toList();
         IntentoCuestionario creado = intentoCuestionarioService.responder(cuestionarioId, respuestas, actual.id());
-        return ResponseEntity.status(HttpStatus.CREATED).body(aDto(creado, true));
+        return ResponseEntity.status(HttpStatus.CREATED).body(paraEstudiante(creado));
     }
 
     @GetMapping("/api/cuestionarios/{cuestionarioId}/mi-intento")
@@ -63,7 +65,7 @@ public class IntentoCuestionarioController {
         if (intento == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(aDto(intento, true));
+        return ResponseEntity.ok(paraEstudiante(intento));
     }
 
     @GetMapping("/api/cuestionarios/{cuestionarioId}/intentos")
@@ -85,7 +87,7 @@ public class IntentoCuestionarioController {
     public IntentoResponseDTO obtenerParaRevision(
             @PathVariable Long id,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
-        return aDto(intentoCuestionarioService.obtenerParaRevision(id, actual.id(), actual.rol()), false);
+        return paraProfesor(intentoCuestionarioService.obtenerParaRevision(id, actual.id(), actual.rol()));
     }
 
     @PatchMapping("/api/intentos/{intentoId}/preguntas/{preguntaId}/calificar")
@@ -97,18 +99,32 @@ public class IntentoCuestionarioController {
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         IntentoCuestionario calificado = intentoCuestionarioService.calificarRespuesta(
                 intentoId, preguntaId, request.puntaje(), actual.id(), actual.rol());
-        return aDto(calificado, false);
+        return paraProfesor(calificado);
     }
 
-    /** {@code ocultarNotaParcial}: true en las respuestas al estudiante, que no ve la nota hasta que se califiquen sus abiertas. */
-    private IntentoResponseDTO aDto(IntentoCuestionario intento, boolean ocultarNotaParcial) {
-        Usuario estudiante = usuarioRepositorio.buscarPorId(intento.getEstudianteId()).orElse(null);
+    /** Profesor dueño o admin: nota, escala sobre 5 y respuestas siempre completas. */
+    private IntentoResponseDTO paraProfesor(IntentoCuestionario intento) {
+        boolean mostrarNota = cuestionarioService.buscarPorId(intento.getCuestionarioId()).isMostrarNota();
+        return IntentoResponseDTO.paraProfesor(intento, estudianteDe(intento), preguntasConRespuesta(intento), mostrarNota);
+    }
+
+    /** Estudiante: sin nota mientras no sea visible, y sin la revisión de respuestas si el profesor ocultó la nota. */
+    private IntentoResponseDTO paraEstudiante(IntentoCuestionario intento) {
+        boolean mostrarNota = cuestionarioService.buscarPorId(intento.getCuestionarioId()).isMostrarNota();
+        List<PreguntaConRespuestaResponseDTO> preguntas = mostrarNota ? preguntasConRespuesta(intento) : List.of();
+        return IntentoResponseDTO.paraEstudiante(intento, estudianteDe(intento), preguntas, mostrarNota);
+    }
+
+    private Usuario estudianteDe(IntentoCuestionario intento) {
+        return usuarioRepositorio.buscarPorId(intento.getEstudianteId()).orElse(null);
+    }
+
+    private List<PreguntaConRespuestaResponseDTO> preguntasConRespuesta(IntentoCuestionario intento) {
         Map<Long, RespuestaValor> respuestaPorPregunta = intento.getRespuestas().stream()
                 .collect(Collectors.toMap(RespuestaValor::preguntaId, Function.identity()));
         List<Pregunta> preguntas = preguntaService.listarPorCuestionario(intento.getCuestionarioId());
-        List<PreguntaConRespuestaResponseDTO> preguntasDto = preguntas.stream()
+        return preguntas.stream()
                 .map(p -> PreguntaConRespuestaResponseDTO.desde(p, respuestaPorPregunta.get(p.getId())))
                 .toList();
-        return IntentoResponseDTO.desde(intento, estudiante, preguntasDto, ocultarNotaParcial);
     }
 }

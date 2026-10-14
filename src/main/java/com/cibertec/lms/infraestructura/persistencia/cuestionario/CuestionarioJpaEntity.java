@@ -43,6 +43,10 @@ public class CuestionarioJpaEntity {
     @Column(name = "tiempo_limite_minutos")
     private Integer tiempoLimiteMinutos;
 
+    /** Nullable solo por los cuestionarios anteriores a este campo: null se lee como true (ver CuestionarioMapper). */
+    @Column(name = "mostrar_nota")
+    private Boolean mostrarNota;
+
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 }

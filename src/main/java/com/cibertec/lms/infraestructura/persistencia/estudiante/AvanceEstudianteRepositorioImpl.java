@@ -54,7 +54,8 @@ class AvanceEstudianteRepositorioImpl implements AvanceEstudianteRepositorio {
                         f.id(), f.titulo(), f.fechaLimite(), f.puntajeMaximoActual().doubleValue(), f.fechaCreacion(),
                         f.moduloId(), f.moduloTitulo(), f.moduloOrden(), f.cursoId(),
                         f.fechaRendicion(), f.nota(), f.puntajeMaximoIntento(),
-                        f.estadoIntento() == EstadoIntento.PENDIENTE_REVISION))
+                        f.estadoIntento() == EstadoIntento.PENDIENTE_REVISION,
+                        f.mostrarNota() == null || f.mostrarNota()))
                 .toList();
     }
 }

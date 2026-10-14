@@ -19,7 +19,7 @@ public interface CuestionarioJpaRepository extends JpaRepository<CuestionarioJpa
                 (SELECT COALESCE(SUM(p.puntaje), 0) FROM PreguntaJpaEntity p WHERE p.cuestionarioId = q.id),
                 q.fechaCreacion,
                 mo.id, mo.titulo, mo.orden, mo.cursoId,
-                i.fechaEntrega, i.nota, i.puntajeMaximo, i.estado)
+                i.fechaEntrega, i.nota, i.puntajeMaximo, i.estado, q.mostrarNota)
             FROM CuestionarioJpaEntity q
             JOIN ModuloJpaEntity mo ON mo.id = q.moduloId
             LEFT JOIN IntentoCuestionarioJpaEntity i ON i.cuestionarioId = q.id AND i.estudianteId = :estudianteId

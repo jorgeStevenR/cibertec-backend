@@ -61,7 +61,7 @@ class AvanceEstudianteServiceTest {
 
     private static CuestionarioDeEstudiante cuestionario(long id, LocalDateTime limite, LocalDateTime rendicion, Double nota, Double maxIntento) {
         return new CuestionarioDeEstudiante(id, "Q" + id, limite, 12.0, LocalDateTime.of(2026, 1, 1, 0, 0).plusMinutes(id),
-                7L, "Modulo 1", 1, CURSO, rendicion, nota, maxIntento, false);
+                7L, "Modulo 1", 1, CURSO, rendicion, nota, maxIntento, false, true);
     }
 
     @Test
@@ -156,6 +156,36 @@ class AvanceEstudianteServiceTest {
 
         assertEquals(List.of(EstadoCalificacion.CALIFICADA, EstadoCalificacion.ENTREGADA, EstadoCalificacion.SIN_ENTREGAR),
                 curso.items().stream().filter(i -> i.tipo() == TipoItem.ACTIVIDAD).map(ItemCalificacion::estado).toList());
+    }
+
+    @Test
+    void unCuestionarioConLaNotaOcultaViajaSinNotaYNoSumaAlTotal() {
+        LocalDateTime rendicion = LocalDateTime.of(2026, 9, 17, 9, 0);
+        CuestionarioDeEstudiante visible = cuestionario(1, null, rendicion, 9.0, 10.0);
+        CuestionarioDeEstudiante oculto = new CuestionarioDeEstudiante(2L, "Q2", null, 12.0, LocalDateTime.of(2026, 1, 1, 0, 2),
+                7L, "Modulo 1", 1, CURSO, rendicion, 6.0, 8.0, false, false);
+        when(avance.listarCuestionarios(ESTUDIANTE, List.of(CURSO))).thenReturn(List.of(visible, oculto));
+
+        CalificacionesCurso curso = service.calificaciones(ESTUDIANTE, null, ESTUDIANTE, Rol.ESTUDIANTE).get(0);
+
+        assertEquals(9.0, curso.puntajeObtenido());          // solo el visible
+        assertEquals(10.0, curso.puntajeMaximoCalificado());
+        ItemCalificacion item = curso.items().get(1);
+        assertEquals(EstadoCalificacion.RENDIDO, item.estado());
+        assertNull(item.nota());
+        assertNull(item.fechaCalificacion());
+    }
+
+    @Test
+    void ocultarLaNotaNoCambiaElPorcentajeDelResumen() {
+        CuestionarioDeEstudiante oculto = new CuestionarioDeEstudiante(2L, "Q2", null, 12.0, LocalDateTime.of(2026, 1, 1, 0, 2),
+                7L, "Modulo 1", 1, CURSO, LocalDateTime.of(2026, 9, 17, 9, 0), 6.0, 8.0, false, false);
+        when(avance.listarCuestionarios(ESTUDIANTE, List.of(CURSO))).thenReturn(List.of(oculto));
+
+        ResumenCurso resumen = service.resumenPorCurso(ESTUDIANTE, ESTUDIANTE, Rol.ESTUDIANTE).get(0);
+
+        assertEquals(1, resumen.cuestionariosRendidos());
+        assertEquals(100, resumen.porcentajeCompletado());
     }
 
     @Test

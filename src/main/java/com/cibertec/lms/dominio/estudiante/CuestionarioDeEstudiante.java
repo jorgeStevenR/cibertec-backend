@@ -18,7 +18,9 @@ public record CuestionarioDeEstudiante(
         Double nota,
         Double puntajeMaximoDelIntento,
         /** Un intento con respuestas abiertas sin calificar tiene nota parcial: no cuenta como calificado. */
-        boolean pendienteRevision
+        boolean pendienteRevision,
+        /** false = el profesor ocultó la nota de este cuestionario a los estudiantes. */
+        boolean mostrarNota
 ) {
     public boolean rendido() {
         return fechaRendicion != null;

@@ -19,6 +19,7 @@ public record CuestionarioAvanceFila(
         LocalDateTime fechaRendicion,
         Double nota,
         Double puntajeMaximoIntento,
-        EstadoIntento estadoIntento
+        EstadoIntento estadoIntento,
+        Boolean mostrarNota
 ) {
 }

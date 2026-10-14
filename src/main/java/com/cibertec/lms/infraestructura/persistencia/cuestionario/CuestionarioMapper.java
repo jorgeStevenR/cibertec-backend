@@ -16,6 +16,8 @@ class CuestionarioMapper {
                 .fechaApertura(entidad.getFechaApertura())
                 .fechaEntrega(entidad.getFechaEntrega())
                 .tiempoLimiteMinutos(entidad.getTiempoLimiteMinutos())
+                // Los cuestionarios anteriores a este campo mostraban la nota: que sigan igual.
+                .mostrarNota(entidad.getMostrarNota() == null || entidad.getMostrarNota())
                 .fechaCreacion(entidad.getFechaCreacion())
                 .build();
     }
@@ -29,6 +31,7 @@ class CuestionarioMapper {
         entidad.setFechaApertura(cuestionario.getFechaApertura());
         entidad.setFechaEntrega(cuestionario.getFechaEntrega());
         entidad.setTiempoLimiteMinutos(cuestionario.getTiempoLimiteMinutos());
+        entidad.setMostrarNota(cuestionario.isMostrarNota());
         entidad.setFechaCreacion(cuestionario.getFechaCreacion());
         return entidad;
     }

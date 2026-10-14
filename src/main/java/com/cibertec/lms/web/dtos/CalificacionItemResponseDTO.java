@@ -2,6 +2,7 @@ package com.cibertec.lms.web.dtos;
 
 import java.time.LocalDateTime;
 
+import com.cibertec.lms.dominio.comun.Calificacion;
 import com.cibertec.lms.dominio.estudiante.EstadoCalificacion;
 import com.cibertec.lms.dominio.estudiante.ItemCalificacion;
 import com.cibertec.lms.dominio.estudiante.TipoItem;
@@ -15,6 +16,8 @@ public record CalificacionItemResponseDTO(
         String moduloTitulo,
         double puntajeMaximo,
         Double nota,
+        /** nota en escala 0,0–5,0; null cuando nota es null. */
+        Double notaSobre5,
         EstadoCalificacion estado,
         LocalDateTime fechaEntrega,
         LocalDateTime fechaCalificacion,
@@ -29,6 +32,7 @@ public record CalificacionItemResponseDTO(
                 item.moduloTitulo(),
                 item.puntajeMaximo(),
                 item.nota(),
+                Calificacion.sobre5(item.nota(), item.puntajeMaximo()),
                 item.estado(),
                 item.fechaEntrega(),
                 item.fechaCalificacion(),

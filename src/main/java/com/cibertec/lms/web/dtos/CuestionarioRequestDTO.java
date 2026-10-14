@@ -20,6 +20,13 @@ public record CuestionarioRequestDTO(
 
         /** Null = sin límite de tiempo. Informativo por ahora: no se corta el intento automáticamente. */
         @Positive(message = "El tiempo límite debe ser mayor a cero")
-        Integer tiempoLimiteMinutos
+        Integer tiempoLimiteMinutos,
+
+        /** Si el estudiante ve su nota y la revisión de sus respuestas. Null = true. */
+        Boolean mostrarNota
 ) {
+
+    public boolean mostrarNotaEfectiva() {
+        return mostrarNota == null || mostrarNota;
+    }
 }

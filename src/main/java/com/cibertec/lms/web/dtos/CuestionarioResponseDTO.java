@@ -19,6 +19,8 @@ public record CuestionarioResponseDTO(
         LocalDateTime fechaApertura,
         LocalDateTime fechaEntrega,
         Integer tiempoLimiteMinutos,
+        /** Primitivo a propósito: con NON_NULL un Boolean null se omitiría, y este campo tiene que viajar siempre. */
+        boolean mostrarNota,
         boolean disponible,
         double puntajeMaximo,
         LocalDateTime fechaCreacion,
@@ -28,7 +30,8 @@ public record CuestionarioResponseDTO(
         return new CuestionarioResponseDTO(
                 cuestionario.getId(), cuestionario.getModuloId(), cuestionario.getTitulo(),
                 cuestionario.getDescripcion(), cuestionario.getFechaApertura(), cuestionario.getFechaEntrega(),
-                cuestionario.getTiempoLimiteMinutos(), disponible, puntajeMaximo, cuestionario.getFechaCreacion(), null);
+                cuestionario.getTiempoLimiteMinutos(), cuestionario.isMostrarNota(), disponible, puntajeMaximo,
+                cuestionario.getFechaCreacion(), null);
     }
 
     public static CuestionarioResponseDTO detalle(
@@ -36,6 +39,7 @@ public record CuestionarioResponseDTO(
         return new CuestionarioResponseDTO(
                 cuestionario.getId(), cuestionario.getModuloId(), cuestionario.getTitulo(),
                 cuestionario.getDescripcion(), cuestionario.getFechaApertura(), cuestionario.getFechaEntrega(),
-                cuestionario.getTiempoLimiteMinutos(), disponible, puntajeMaximo, cuestionario.getFechaCreacion(), preguntas);
+                cuestionario.getTiempoLimiteMinutos(), cuestionario.isMostrarNota(), disponible, puntajeMaximo,
+                cuestionario.getFechaCreacion(), preguntas);
     }
 }

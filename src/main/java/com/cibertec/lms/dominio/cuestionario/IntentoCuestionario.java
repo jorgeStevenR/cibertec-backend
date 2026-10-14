@@ -27,4 +27,9 @@ public class IntentoCuestionario {
     public boolean pendienteDeRevision() {
         return estado == EstadoIntento.PENDIENTE_REVISION;
     }
+
+    /** Si el estudiante puede ver su nota: el profesor la deja visible en el cuestionario y ya no quedan abiertas por calificar. */
+    public boolean notaVisible(boolean mostrarNota) {
+        return mostrarNota && !pendienteDeRevision();
+    }
 }

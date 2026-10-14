@@ -36,7 +36,7 @@ public class CuestionarioService {
 
     public Cuestionario crear(
             Long moduloId, String titulo, String descripcion, LocalDateTime fechaApertura, LocalDateTime fechaEntrega,
-            Integer tiempoLimiteMinutos, Long usuarioActualId, Rol rolActual) {
+            Integer tiempoLimiteMinutos, boolean mostrarNota, Long usuarioActualId, Rol rolActual) {
         validarPropietarioDelModulo(moduloId, usuarioActualId, rolActual);
 
         Cuestionario nuevo = Cuestionario.builder()
@@ -46,6 +46,7 @@ public class CuestionarioService {
                 .fechaApertura(fechaApertura)
                 .fechaEntrega(fechaEntrega)
                 .tiempoLimiteMinutos(tiempoLimiteMinutos)
+                .mostrarNota(mostrarNota)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
 
@@ -66,7 +67,7 @@ public class CuestionarioService {
 
     public Cuestionario actualizar(
             Long id, String titulo, String descripcion, LocalDateTime fechaApertura, LocalDateTime fechaEntrega,
-            Integer tiempoLimiteMinutos, Long usuarioActualId, Rol rolActual) {
+            Integer tiempoLimiteMinutos, boolean mostrarNota, Long usuarioActualId, Rol rolActual) {
         Cuestionario existente = buscarPorId(id);
         validarPropietarioDelModulo(existente.getModuloId(), usuarioActualId, rolActual);
 
@@ -78,6 +79,7 @@ public class CuestionarioService {
                 .fechaApertura(fechaApertura)
                 .fechaEntrega(fechaEntrega)
                 .tiempoLimiteMinutos(tiempoLimiteMinutos)
+                .mostrarNota(mostrarNota)
                 .fechaCreacion(existente.getFechaCreacion())
                 .build();
 

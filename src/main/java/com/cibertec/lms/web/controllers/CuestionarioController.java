@@ -41,7 +41,7 @@ public class CuestionarioController {
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Cuestionario creado = cuestionarioService.crear(
                 moduloId, request.titulo(), request.descripcion(), request.fechaApertura(), request.fechaEntrega(),
-                request.tiempoLimiteMinutos(), actual.id(), actual.rol());
+                request.tiempoLimiteMinutos(), request.mostrarNotaEfectiva(), actual.id(), actual.rol());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CuestionarioResponseDTO.resumen(creado, cuestionarioService.estaDisponible(creado), 0));
     }
@@ -91,7 +91,7 @@ public class CuestionarioController {
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         Cuestionario actualizado = cuestionarioService.actualizar(
                 id, request.titulo(), request.descripcion(), request.fechaApertura(), request.fechaEntrega(),
-                request.tiempoLimiteMinutos(), actual.id(), actual.rol());
+                request.tiempoLimiteMinutos(), request.mostrarNotaEfectiva(), actual.id(), actual.rol());
         return CuestionarioResponseDTO.resumen(
                 actualizado, cuestionarioService.estaDisponible(actualizado), cuestionarioService.calcularPuntajeMaximo(id));
     }

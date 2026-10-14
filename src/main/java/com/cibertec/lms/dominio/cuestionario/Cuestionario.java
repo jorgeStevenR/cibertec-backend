@@ -24,6 +24,8 @@ public class Cuestionario {
 
     /** Informativo por ahora: no hay cronómetro que corte el intento automáticamente. Puede ser null. */
     private Integer tiempoLimiteMinutos;
+    /** Si es false, el estudiante no ve ni su nota ni la revisión de sus respuestas (el profesor y el admin sí). */
+    private boolean mostrarNota;
 
     private LocalDateTime fechaCreacion;
 }

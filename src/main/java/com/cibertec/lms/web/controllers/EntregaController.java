@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.cibertec.lms.aplicacion.actividad.ActividadService;
 import com.cibertec.lms.aplicacion.actividad.EntregaService;
 import com.cibertec.lms.dominio.actividad.Entrega;
 import com.cibertec.lms.dominio.usuario.Usuario;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class EntregaController {
 
     private final EntregaService entregaService;
+    private final ActividadService actividadService;
     private final UsuarioRepositorio usuarioRepositorio;
 
     @PostMapping("/api/actividades/{actividadId}/entregas")
@@ -59,10 +61,12 @@ public class EntregaController {
             @PathVariable Long actividadId,
             @AuthenticationPrincipal UsuarioAutenticado actual) {
         List<Entrega> entregas = entregaService.listarPorActividad(actividadId, actual.id(), actual.rol());
+        // Todas las entregas son de la misma actividad: su puntaje máximo se busca una sola vez.
+        double puntajeMaximo = actividadService.buscarPorId(actividadId).getPuntajeMaximo();
         Map<Long, Usuario> estudiantes = usuarioRepositorio.buscarPorIds(
                 entregas.stream().map(Entrega::getEstudianteId).distinct().toList());
         return entregas.stream()
-                .map(e -> EntregaResponseDTO.desde(e, estudiantes.get(e.getEstudianteId())))
+                .map(e -> EntregaResponseDTO.desde(e, estudiantes.get(e.getEstudianteId()), puntajeMaximo))
                 .toList();
     }
 
@@ -98,6 +102,7 @@ public class EntregaController {
 
     private EntregaResponseDTO aDto(Entrega entrega) {
         Usuario estudiante = usuarioRepositorio.buscarPorId(entrega.getEstudianteId()).orElse(null);
-        return EntregaResponseDTO.desde(entrega, estudiante);
+        double puntajeMaximo = actividadService.buscarPorId(entrega.getActividadId()).getPuntajeMaximo();
+        return EntregaResponseDTO.desde(entrega, estudiante, puntajeMaximo);
     }
 }
