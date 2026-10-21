@@ -1,0 +1,31 @@
+# Blueprint de Render para el backend. Los valores con "sync: false" se cargan a mano
+# en el panel de Render (Environment) y nunca se suben al repositorio.
+services:
+  - type: web
+    name: cibertec-lms-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false   # jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: LMS_JWT_SECRET
+        generateValue: true   # Render genera uno aleatorio y largo
+      - key: LMS_CORS_ORIGENES
+        sync: false   # URL pública del frontend, ej. https://cibertec-lms.onrender.com
+      - key: LMS_ALMACENAMIENTO_ENDPOINT
+        sync: false
+      - key: LMS_ALMACENAMIENTO_ACCESS_KEY_ID
+        sync: false
+      - key: LMS_ALMACENAMIENTO_SECRET_ACCESS_KEY
+        sync: false
+      - key: LMS_ADMIN_PASSWORD
+        sync: false   # solo se usa si la cuenta admin todavía no existe en la base
+      - key: LMS_GESTOR_PASSWORD
+        sync: false
+      - key: DB_POOL_MAX
+        value: "5"

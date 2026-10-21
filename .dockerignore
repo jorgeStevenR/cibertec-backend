@@ -1,0 +1,13 @@
+# Solo pom.xml y src/ entran a la imagen; nunca secretos ni builds locales.
+target/
+.git/
+.gitignore
+.idea/
+.vscode/
+.mvn/
+mvnw
+mvnw.cmd
+*.md
+.env
+**/application-local.yml
+HELP.md

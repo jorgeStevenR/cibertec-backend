@@ -1,0 +1,27 @@
+# Perfil de producción (Render): lo activa el Dockerfile con SPRING_PROFILES_ACTIVE=prod.
+# A propósito SIN valores por defecto: si falta una variable de entorno el servidor no arranca,
+# en vez de arrancar con la clave débil de desarrollo o con contraseñas conocidas.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+lms:
+  cors:
+    origenes: ${LMS_CORS_ORIGENES}
+  jwt:
+    secret: ${LMS_JWT_SECRET}
+  admin:
+    password: ${LMS_ADMIN_PASSWORD}
+  gestor:
+    password: ${LMS_GESTOR_PASSWORD}
+  almacenamiento:
+    endpoint: ${LMS_ALMACENAMIENTO_ENDPOINT}
+    access-key-id: ${LMS_ALMACENAMIENTO_ACCESS_KEY_ID}
+    secret-access-key: ${LMS_ALMACENAMIENTO_SECRET_ACCESS_KEY}
