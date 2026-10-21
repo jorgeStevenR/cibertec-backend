@@ -145,6 +145,10 @@ Roles: `ESTUDIANTE` (solo su propio `{estudianteId}`, si no 403) y `ADMINISTRADO
 
 ## Log de sesiones
 
+### 2026-10-21
+- Dockerizado para desplegar en Render: `Dockerfile` en dos etapas (Maven 3.9 + JDK 21 → JRE 21 alpine, usuario sin privilegios, sin tests en el build), `.dockerignore` (nunca entra `application-local.yml`), `render.yaml` y `README.md` con la tabla de variables. Nuevo perfil `prod` (`application-prod.yml`, activado por la imagen) **sin valores por defecto** para base, JWT, CORS, Storage y contraseñas iniciales: si falta una variable, no arranca. `server.port` sale de `PORT`; CORS de `lms.cors.origenes` (`LMS_CORS_ORIGENES`, separadas por coma) en vez de `localhost:4200` fijo; pool de Hikari en 5 (`DB_POOL_MAX`) por el límite de 15 conexiones de Supabase; `/actuator/health` ya no muestra detalles a anónimos. En local nada cambia (perfil `local` por defecto).
+- Probado: imagen construida y corrida con perfil `prod` y variables de entorno contra la base real → health `UP`, login + `GET /api/cursos/31` 200, CORS 200 para el origen configurado y 403 para otro.
+
 ### 2026-10-14
 - Cuestionarios con verdadero/falso y respuesta abierta + calificación manual (ver contrato y Decisiones). `respuestas_intento.opcion_id` relajado a nullable a mano en Supabase.
 - Nota sobre 5 y `mostrarNota` (rama `feature/cuestionarios-nota-visible`, que sale de `feature/cuestionarios-tipos-pregunta`). Verificado en vivo: con la nota oculta el estudiante recibe `nota`/`notaSobre5` null y `preguntas` vacía, y el cuestionario no suma en Calificaciones; al activar `mostrarNota` ve 2,5 pts = 4,2 sobre 5 y suma; los cuestionarios viejos (`mostrar_nota` null) siguen mostrando la nota (camila.rojas, curso 18: 35/40 → 4,4; actividad 18/20 → 4,5). Lo de prueba se borró.
