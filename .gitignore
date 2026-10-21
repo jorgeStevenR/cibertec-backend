@@ -35,6 +35,7 @@ build/
 ### Secretos locales ###
 application-local.yml
 .env
+.env.*
 
 ### Crashes de la JVM / temporales de editor ###
 hs_err_pid*.log
